@@ -13,8 +13,9 @@
 import pandas as pd
 import numpy as np
 import os
+import matplotlib
+matplotlib.use('Agg')   # Non-interactive backend — no popup windows
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.impute import SimpleImputer   # Fills in missing values
 
@@ -225,17 +226,17 @@ axes[1].pie(binary_counts, labels=['Benign', 'Malware'],
             autopct='%1.1f%%', colors=['#2ecc71', '#e74c3c'])
 axes[1].set_title('Benign vs Malware (Binary)')
 
-# Chart 3: Feature correlation heatmap (top 10 features)
-top_features = X_filtered.var().nlargest(10).index
-corr_matrix = X_filtered[top_features].corr()
-sns.heatmap(corr_matrix, ax=axes[2], cmap='coolwarm',
-            annot=False, fmt='.2f', linewidths=0.5)
-axes[2].set_title('Feature Correlation (Top 10)')
-axes[2].tick_params(axis='x', rotation=45)
+# Chart 3: Top 5 most important features by variance (bar chart — much faster than heatmap)
+top5 = X_filtered.var().nlargest(5)
+axes[2].barh(range(5), top5.values, color='#3498db')
+axes[2].set_yticks(range(5))
+axes[2].set_yticklabels([c[:20] for c in top5.index], fontsize=8)
+axes[2].set_title('Top 5 Features by Variance')
+axes[2].set_xlabel('Variance')
 
 plt.tight_layout()
 plt.savefig('../outputs/visualizations/malmem_analysis.png', dpi=150, bbox_inches='tight')
-plt.show()
+plt.close()   # Close silently — chart is saved to file, no popup window
 print("✓ Saved chart: ../outputs/visualizations/malmem_analysis.png")
 
 print("\n✅ MalMem preprocessing complete!")

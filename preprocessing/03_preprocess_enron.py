@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 import re
 import os
+import matplotlib
+matplotlib.use('Agg')   # Non-interactive backend — no popup windows
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -267,7 +269,7 @@ axes[2].set_xlabel('% of Spam Emails Containing Keyword')
 
 plt.tight_layout()
 plt.savefig('../outputs/visualizations/enron_analysis.png', dpi=150, bbox_inches='tight')
-plt.show()
+plt.close()   # Save silently, no popup window
 print("✓ Saved chart: ../outputs/visualizations/enron_analysis.png")
 
 print("\n✅ Enron email preprocessing complete!")

@@ -14,10 +14,12 @@ import pandas as pd           # For loading and manipulating data (like Excel in
 import numpy as np            # For numerical operations
 import re                     # For text cleaning using regular expressions
 import os                     # For file and folder operations
-from sklearn.preprocessing import LabelEncoder          # Converts labels like "spam"/"ham" to 0/1
-from sklearn.feature_extraction.text import TfidfVectorizer  # Converts text to numbers
-import matplotlib.pyplot as plt   # For creating charts and graphs
-import seaborn as sns             # For nicer-looking charts
+import matplotlib
+matplotlib.use('Agg')         # Non-interactive backend — charts save to file, no popups
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # --- Setup: Create output folder if it doesn't exist ---
 os.makedirs("../data/processed", exist_ok=True)   # Where we save cleaned data
@@ -241,7 +243,7 @@ axes[2].tick_params(axis='x', rotation=0)
 
 plt.tight_layout()
 plt.savefig('../outputs/visualizations/sms_spam_analysis.png', dpi=150, bbox_inches='tight')
-plt.show()
+plt.close()   # Save silently, no popup window
 print("✓ Saved chart: ../outputs/visualizations/sms_spam_analysis.png")
 
 print("\n✅ SMS Spam preprocessing complete!")
