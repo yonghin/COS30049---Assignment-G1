@@ -187,9 +187,11 @@ print(f"  Benign samples:  {(final_df['binary_label']==0).sum()}")
 print(f"  Malware samples: {(final_df['binary_label']==1).sum()}")
 
 # Save the category mapping for reference
+# NOTE: Convert int64 values to regular Python int first — JSON can't handle numpy int64
 import json
+category_mapping_serializable = {k: int(v) for k, v in category_mapping.items()}
 with open("../data/processed/category_mapping.json", "w") as f:
-    json.dump(category_mapping, f, indent=2)
+    json.dump(category_mapping_serializable, f, indent=2)
 print(f"✓ Saved category mapping: ../data/processed/category_mapping.json")
 
 # Also save the scaler — we need it later to scale new data for predictions

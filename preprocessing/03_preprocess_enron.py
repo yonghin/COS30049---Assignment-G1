@@ -26,52 +26,62 @@ print("STEP 1: Loading Enron Email Dataset")
 print("=" * 60)
 
 # --- Load the Enron dataset ---
-# The Kaggle Enron spam dataset typically has columns: 'text' and 'spam' (0 or 1)
+# CORRECT DATASET: "Enron Spam Data" by marcelwiechmann on Kaggle
+# URL: https://www.kaggle.com/datasets/marcelwiechmann/enron-spam-data
+# This has ~33,716 emails with a 'Spam/Ham' label column.
+# DO NOT use: wcukierski/enron-email-dataset (that one has 517k unlabeled emails)
+
 try:
     df = pd.read_csv("../data/raw/enron_spam_data.csv")
     print(f"✓ Loaded {len(df)} emails")
     print(f"Columns: {df.columns.tolist()}")
 except FileNotFoundError:
-    try:
-        df = pd.read_csv("../data/raw/emails.csv")
-        print(f"✓ Loaded {len(df)} emails")
-    except FileNotFoundError:
-        print("❌ File not found. Please check your filename in ../data/raw/")
-        print("Common names: enron_spam_data.csv, emails.csv, enron.csv")
-        exit()
+    print("❌ File not found!")
+    print("Please download the CORRECT Enron dataset:")
+    print("  → https://www.kaggle.com/datasets/marcelwiechmann/enron-spam-data")
+    print("  → Save the file as: ../data/raw/enron_spam_data.csv")
+    exit()
 
 print("\nFirst 2 rows:")
 print(df.head(2))
 
 # =============================================================================
 # STEP 2: Standardize column names
-# Different Enron CSV versions use different column names
+# marcelwiechmann dataset columns: Message ID, Subject, Message, Spam/Ham, Date
 # =============================================================================
 print("\n" + "=" * 60)
 print("STEP 2: Standardizing Column Names")
 print("=" * 60)
 
-# Rename columns to standard names we use throughout the project
-column_map = {}
+print(f"All columns found: {df.columns.tolist()}")
 
-# Find the text/message column
+# Find the message/text column
+message_col = None
 for col in df.columns:
     if col.lower() in ['message', 'text', 'body', 'email', 'content']:
-        column_map[col] = 'message'
+        message_col = col
         break
 
-# Find the label column
+# Find the label column — marcelwiechmann uses 'Spam/Ham'
+label_col = None
 for col in df.columns:
-    if col.lower() in ['spam', 'label', 'class', 'category', 'target']:
-        column_map[col] = 'label_raw'
+    if col.lower() in ['spam/ham', 'spam', 'label', 'class', 'category', 'target', 'is_spam']:
+        label_col = col
         break
 
-df = df.rename(columns=column_map)
-print(f"Renamed columns: {column_map}")
+print(f"Message column detected: '{message_col}'")
+print(f"Label column detected:   '{label_col}'")
 
-# Keep only the columns we need
+if label_col is None or message_col is None:
+    print("❌ Could not auto-detect columns. Columns in your file:")
+    print(df.columns.tolist())
+    print("Update message_col and label_col manually above.")
+    exit()
+
+# Rename to standard names used throughout this project
+df = df.rename(columns={message_col: 'message', label_col: 'label_raw'})
 df = df[['message', 'label_raw']].copy()
-df = df.dropna()  # Remove rows where message or label is empty
+df = df.dropna()
 print(f"After removing empty rows: {len(df)} emails")
 
 # =============================================================================
