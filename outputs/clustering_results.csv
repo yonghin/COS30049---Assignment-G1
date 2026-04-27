@@ -1,0 +1,3 @@
+Model,N_Clusters,Silhouette,Adj_Rand_Index,Homogeneity,Completeness,Notes
+K-Means,2,0.4694,0.9388,0.8894,0.8898,Groups malware into known families
+DBSCAN,17,0.2682,N/A,N/A,N/A,710 anomalies detected (4.7%)

@@ -1,0 +1,4 @@
+Model,TP,TN,FP,FN,FP_Rate,FN_Rate
+Random Forest,3480,4152,40,85,0.0095,0.0238
+Naive Bayes,106,894,9,25,0.01,0.1908
+Logistic Regression,96,898,5,35,0.0055,0.2672

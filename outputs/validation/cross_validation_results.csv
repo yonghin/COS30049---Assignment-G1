@@ -1,0 +1,5 @@
+Model,CV_Acc_Mean,CV_Acc_Std,CV_F1_Mean,CV_F1_Std
+Random Forest — Spam,0.983,0.0011,0.983,0.0011
+Naive Bayes — Spam (TF-IDF),0.966,0.0022,0.9646,0.0024
+Logistic Regression — Spam,0.966,0.0029,0.9639,0.0033
+SVM — Malware,0.9989,0.0003,0.9989,0.0003

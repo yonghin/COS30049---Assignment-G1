@@ -1,0 +1,9 @@
+Message,True_Label,NB_Prediction,NB_Spam_Prob,LR_Prediction,LR_Spam_Prob,NB_Correct,LR_Correct
+Congratulations! You've won a FREE iPhone. Click here to claim your prize now!,SPAM,SPAM,0.9794,SPAM,0.787,True,True
+"Hey, are you coming to the meeting at 3pm today?",HAM,HAM,0.019,HAM,0.0479,True,True
+URGENT: Your bank account has been suspended. Call us immediately to verify.,SPAM,HAM,0.4558,HAM,0.2093,False,False
+Can you pick up some milk on your way home?,HAM,HAM,0.0089,HAM,0.0256,True,True
+You have been selected for a $1000 Walmart gift card. Text WIN to 8765,SPAM,HAM,0.1227,HAM,0.0575,False,False
+"Thanks for dinner last night, it was really nice catching up!",HAM,HAM,0.0028,HAM,0.0129,True,True
+FREE entry in 2 a weekly competition to win FA Cup final tickets!,SPAM,SPAM,0.677,HAM,0.2366,True,False
+Don't forget the doctor appointment tomorrow at 10am,HAM,HAM,0.0536,HAM,0.0735,True,True
