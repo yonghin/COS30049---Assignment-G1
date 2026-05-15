@@ -27,11 +27,11 @@ A machine learning system that detects spam messages and malware threats using c
 
 CyberShield AI implements six machine learning models across three method types:
 
-| Method Type    | Models                                 | Task                              |
-|----------------|----------------------------------------|-----------------------------------|
-| Classification | Random Forest, Naive Bayes, SVM        | Spam detection, Malware detection |
-| Clustering     | K-Means, DBSCAN                        | Malware family grouping           |
-| Regression     | Logistic Regression                    | Spam probability scoring          |
+| Method Type    | Models                          | Task                              |
+| -------------- | ------------------------------- | --------------------------------- |
+| Classification | Random Forest, Naive Bayes, SVM | Spam detection, Malware detection |
+| Clustering     | K-Means, DBSCAN                 | Malware family grouping           |
+| Regression     | Logistic Regression             | Spam probability scoring          |
 
 **Tech Stack:** Python 3.10 · scikit-learn · pandas · matplotlib · seaborn
 
@@ -43,15 +43,8 @@ CyberShield AI implements six machine learning models across three method types:
 CyberShield-AI/
 │
 ├── data/
-│   ├── raw/                        ← Place downloaded datasets here
-│   └── processed/                  ← Auto-generated after preprocessing
-│
-├── preprocessing/
-│   ├── 00_run_all_preprocessing.py ← Master script (runs all preprocessing)
-│   ├── 01_preprocess_sms_spam.py
-│   ├── 02_preprocess_malmem.py
-│   ├── 03_preprocess_enron.py
-│   └── 04_preprocess_basic_datasets.py
+│   ├── processed/                  ← Auto-generated after preprocessing
+│   └── raw/                        ← Place downloaded datasets here
 │
 ├── models/
 │   ├── 05_classification_models.py ← Random Forest, Naive Bayes, SVM
@@ -63,8 +56,15 @@ CyberShield-AI/
 │
 ├── outputs/
 │   ├── models/                     ← Saved .pkl model files
-│   ├── visualizations/             ← All generated charts (PNG)
-│   └── validation/                 ← CSV results tables
+│   ├── validation/                 ← CSV results tables
+│   └── visualizations/             ← All generated charts (PNG)
+│
+├── preprocessing/
+│   ├── 00_run_all_preprocessing.py ← Master script (runs all preprocessing)
+│   ├── 01_preprocess_sms_spam.py
+│   ├── 02_preprocess_malmem.py
+│   ├── 03_preprocess_enron.py
+│   └── 04_preprocess_basic_datasets.py
 │
 └── README.md
 ```
@@ -75,12 +75,12 @@ CyberShield-AI/
 
 Download all four datasets and place them in the `data/raw/` folder **before running any scripts**.
 
-| # | Dataset | Source | Filename to use |
-|---|---------|--------|-----------------|
-| 1 | SMS Spam Collection | [UCI ML Repository](https://archive.ics.uci.edu/dataset/228/sms+spam+collection) | `SMSSpamCollection` |
-| 2 | Enron Email Spam Data | [Kaggle — marcelwiechmann](https://www.kaggle.com/datasets/marcelwiechmann/enron-spam-data) | `enron_spam_data.csv` |
-| 3 | CIC-MalMem-2022 | [Kaggle — jlcole](https://www.kaggle.com/datasets/jlcole/cic-malmem-2022) | `Obfuscated-MalMem2022.csv` |
-| 4 | Unit Basic Datasets | Provided by course | `emails_inti.csv`, `Malware_dataset.csv` |
+| #   | Dataset               | Source                                                                                      | Filename to use                          |
+| --- | --------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 1   | SMS Spam Collection   | [UCI ML Repository](https://archive.ics.uci.edu/dataset/228/sms+spam+collection)            | `SMSSpamCollection`                      |
+| 2   | Enron Email Spam Data | [Kaggle — marcelwiechmann](https://www.kaggle.com/datasets/marcelwiechmann/enron-spam-data) | `enron_spam_data.csv`                    |
+| 3   | CIC-MalMem-2022       | [Kaggle — jlcole](https://www.kaggle.com/datasets/jlcole/cic-malmem-2022)                   | `Obfuscated-MalMem2022.csv`              |
+| 4   | Unit Basic Datasets   | Provided by course                                                                          | `emails_inti.csv`, `Malware_dataset.csv` |
 
 > ⚠️ **Important:** For the Enron dataset, use the **marcelwiechmann** version (33,716 labelled emails).
 > Do NOT use the wcukierski version — it is unlabelled and incompatible with this pipeline.
@@ -89,6 +89,7 @@ Download all four datasets and place them in the `data/raw/` folder **before run
 > **Save As → CSV (Comma delimited)** before placing them in `data/raw/`.
 
 Your `data/raw/` folder should contain:
+
 ```
 data/raw/
 ├── SMSSpamCollection           (no extension)
@@ -103,6 +104,7 @@ data/raw/
 ## Environment Setup
 
 ### Prerequisites
+
 - [Miniconda](https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe) or Anaconda installed
 - Python 3.10
 - ~3 GB free disk space (for datasets and processed files)
@@ -138,6 +140,7 @@ python -c "import pandas, numpy, sklearn, matplotlib, seaborn; print('All packag
 ```
 
 Expected output:
+
 ```
 All packages OK
 ```
@@ -164,12 +167,12 @@ python 00_run_all_preprocessing.py
 
 This master script automatically runs all four preprocessing scripts in order:
 
-| Script | Dataset | What it does |
-|--------|---------|-------------|
-| `01_preprocess_sms_spam.py` | SMS Spam Collection | Text cleaning, TF-IDF vectorisation, feature engineering |
-| `02_preprocess_malmem.py` | CIC-MalMem-2022 | Missing value imputation, variance filtering, StandardScaler normalisation |
-| `03_preprocess_enron.py` | Enron Email | Text cleaning, TF-IDF vectorisation, label standardisation |
-| `04_preprocess_basic_datasets.py` | Unit basic datasets | Auto-detection of columns, cleaning, scaling |
+| Script                            | Dataset             | What it does                                                               |
+| --------------------------------- | ------------------- | -------------------------------------------------------------------------- |
+| `01_preprocess_sms_spam.py`       | SMS Spam Collection | Text cleaning, TF-IDF vectorisation, feature engineering                   |
+| `02_preprocess_malmem.py`         | CIC-MalMem-2022     | Missing value imputation, variance filtering, StandardScaler normalisation |
+| `03_preprocess_enron.py`          | Enron Email         | Text cleaning, TF-IDF vectorisation, label standardisation                 |
+| `04_preprocess_basic_datasets.py` | Unit basic datasets | Auto-detection of columns, cleaning, scaling                               |
 
 ### Expected output files in `data/processed/`
 
@@ -215,11 +218,11 @@ This runs three training scripts in order:
 
 Trains three classifiers:
 
-| Model | Dataset | Parameters |
-|-------|---------|-----------|
+| Model         | Dataset                             | Parameters                                            |
+| ------------- | ----------------------------------- | ----------------------------------------------------- |
 | Random Forest | Combined spam (engineered features) | `n_estimators=100`, `max_depth=15`, `random_state=42` |
-| Naive Bayes | SMS spam (TF-IDF) | `alpha=1.0` (Laplace smoothing) |
-| SVM | MalMem malware features | `kernel='rbf'`, `C=1.0`, `gamma='scale'` |
+| Naive Bayes   | SMS spam (TF-IDF)                   | `alpha=1.0` (Laplace smoothing)                       |
+| SVM           | MalMem malware features             | `kernel='rbf'`, `C=1.0`, `gamma='scale'`              |
 
 > ⏱️ **SVM training takes approximately 2–3 minutes** on a 20,000-sample subset. This is normal.
 
@@ -227,17 +230,17 @@ Trains three classifiers:
 
 Trains two clustering models:
 
-| Model | Dataset | Parameters |
-|-------|---------|-----------|
+| Model   | Dataset                    | Parameters                                              |
+| ------- | -------------------------- | ------------------------------------------------------- |
 | K-Means | MalMem (10 PCA components) | `n_clusters` auto-detected, `n_init=10`, `max_iter=300` |
-| DBSCAN | MalMem (5 PCA components) | `eps=0.8`, `min_samples=15` |
+| DBSCAN  | MalMem (5 PCA components)  | `eps=0.8`, `min_samples=15`                             |
 
 ### Script 3 — Regression Model (`07_regression_model.py`)
 
 Trains Logistic Regression on SMS spam TF-IDF features:
 
-| Model | Dataset | Parameters |
-|-------|---------|-----------|
+| Model               | Dataset           | Parameters                                 |
+| ------------------- | ----------------- | ------------------------------------------ |
 | Logistic Regression | SMS spam (TF-IDF) | `C=1.0`, `max_iter=1000`, `solver='lbfgs'` |
 
 ### Expected saved model files in `outputs/models/`
@@ -276,26 +279,26 @@ python 10_fix_and_enhance_charts.py
 
 ### What `09_validation_and_insights.py` generates
 
-| Output | Location |
-|--------|----------|
-| Learning curve charts (4 models) | `outputs/visualizations/lc_*.png` |
-| Cross-validation results table | `outputs/validation/cross_validation_results.csv` |
-| ROC curves (all models) | `outputs/visualizations/roc_all_models.png` |
-| Error analysis (FP vs FN) | `outputs/visualizations/error_analysis.png` |
-| Live prediction test results | `outputs/validation/live_predictions.csv` |
-| Final model ranking table | `outputs/validation/model_ranking.csv` |
+| Output                           | Location                                          |
+| -------------------------------- | ------------------------------------------------- |
+| Learning curve charts (4 models) | `outputs/visualizations/lc_*.png`                 |
+| Cross-validation results table   | `outputs/validation/cross_validation_results.csv` |
+| ROC curves (all models)          | `outputs/visualizations/roc_all_models.png`       |
+| Error analysis (FP vs FN)        | `outputs/visualizations/error_analysis.png`       |
+| Live prediction test results     | `outputs/validation/live_predictions.csv`         |
+| Final model ranking table        | `outputs/validation/model_ranking.csv`            |
 
 ### What `10_fix_and_enhance_charts.py` generates
 
-| Chart | Description |
-|-------|-------------|
-| `dbscan_clusters_fixed.png` | DBSCAN scatter plot (dark background) |
-| `malmem_analysis_fixed.png` | MalMem category distribution (fixed labels) |
+| Chart                            | Description                                   |
+| -------------------------------- | --------------------------------------------- |
+| `dbscan_clusters_fixed.png`      | DBSCAN scatter plot (dark background)         |
+| `malmem_analysis_fixed.png`      | MalMem category distribution (fixed labels)   |
 | `malmem_correlation_heatmap.png` | Feature correlation heatmap (top 12 features) |
-| `malmem_feature_boxplot.png` | Feature distributions by malware category |
-| `pca_scree_plot.png` | PCA explained variance scree plot |
-| `spam_keyword_heatmap.png` | Spam keyword frequency heatmap |
-| `cluster_size_comparison.png` | K-Means vs DBSCAN cluster sizes |
+| `malmem_feature_boxplot.png`     | Feature distributions by malware category     |
+| `pca_scree_plot.png`             | PCA explained variance scree plot             |
+| `spam_keyword_heatmap.png`       | Spam keyword frequency heatmap                |
+| `cluster_size_comparison.png`    | K-Means vs DBSCAN cluster sizes               |
 
 > ⏱️ `09_validation_and_insights.py` takes approximately 5–10 minutes to run
 > because it computes learning curves using cross-validation on all models.
@@ -351,6 +354,7 @@ print(f"Spam Prob:    {spam_prob:.4f} ({spam_prob*100:.1f}%)")
 ```
 
 **Example output:**
+
 ```
 Message:      Congratulations! You've won a FREE iPhone. Click here to claim your prize!
 Prediction:   SPAM
@@ -392,6 +396,7 @@ print(f"Malware Prob:     {probability[1]:.4f}")
 ```
 
 **Example output:**
+
 ```
 Prediction:       BENIGN
 Benign Prob:      0.9934
@@ -473,14 +478,14 @@ print("\n✅ Prediction demo complete.")
 
 ## Model Summary
 
-| Model | Type | Task | Accuracy | F1 Score | AUC-ROC |
-|-------|------|------|----------|----------|---------|
-| SVM | Classification | Malware detection | 99.92% | 0.9993 | 1.0000 |
-| Random Forest | Classification | Spam detection | 98.39% | 0.9839 | 0.9978 |
-| Naive Bayes | Classification | Spam detection | 96.71% | 0.9662 | 0.9787 |
-| Logistic Regression | Regression | Spam probability | 96.13% | 0.9591 | 0.9899 |
-| K-Means | Clustering | Malware grouping | — | Silhouette: 0.5668 | — |
-| DBSCAN | Clustering | Anomaly detection | — | 710 anomalies (4.7%) | — |
+| Model               | Type           | Task              | Accuracy | F1 Score             | AUC-ROC |
+| ------------------- | -------------- | ----------------- | -------- | -------------------- | ------- |
+| SVM                 | Classification | Malware detection | 99.92%   | 0.9993               | 1.0000  |
+| Random Forest       | Classification | Spam detection    | 98.39%   | 0.9839               | 0.9978  |
+| Naive Bayes         | Classification | Spam detection    | 96.71%   | 0.9662               | 0.9787  |
+| Logistic Regression | Regression     | Spam probability  | 96.13%   | 0.9591               | 0.9899  |
+| K-Means             | Clustering     | Malware grouping  | —        | Silhouette: 0.5668   | —       |
+| DBSCAN              | Clustering     | Anomaly detection | —        | 710 anomalies (4.7%) | —       |
 
 ---
 
@@ -507,23 +512,23 @@ outputs/
 
 ## Troubleshooting
 
-| Problem | Cause | Fix |
-|---------|-------|-----|
-| `conda: command not found` | Running in Git Bash instead of Anaconda Prompt | Open **Anaconda Prompt** from the Start Menu |
-| `ModuleNotFoundError: sklearn` | Running in `(base)` instead of `(spam_malware)` | Run `conda activate spam_malware` first |
-| `FileNotFoundError: enron_spam_data.csv` | Wrong Enron version downloaded | Download from **marcelwiechmann** on Kaggle |
-| `ValueError: n_clusters=28346` | Wrong label column used for K-Means | Fixed in `06_clustering_models.py` — re-download latest version |
-| Script pauses at Step 8 (charts) | `plt.show()` blocking the script | Fixed in latest scripts — uses `Agg` backend + `plt.close()` |
-| SVM takes very long | Training on full 58k rows | Normal — script samples 20,000 rows automatically |
-| `KeyboardInterrupt` on heatmap | Seaborn rendering too slow | Fixed in latest `02_preprocess_malmem.py` — uses bar chart instead |
+| Problem                                  | Cause                                           | Fix                                                                |
+| ---------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| `conda: command not found`               | Running in Git Bash instead of Anaconda Prompt  | Open **Anaconda Prompt** from the Start Menu                       |
+| `ModuleNotFoundError: sklearn`           | Running in `(base)` instead of `(spam_malware)` | Run `conda activate spam_malware` first                            |
+| `FileNotFoundError: enron_spam_data.csv` | Wrong Enron version downloaded                  | Download from **marcelwiechmann** on Kaggle                        |
+| `ValueError: n_clusters=28346`           | Wrong label column used for K-Means             | Fixed in `06_clustering_models.py` — re-download latest version    |
+| Script pauses at Step 8 (charts)         | `plt.show()` blocking the script                | Fixed in latest scripts — uses `Agg` backend + `plt.close()`       |
+| SVM takes very long                      | Training on full 58k rows                       | Normal — script samples 20,000 rows automatically                  |
+| `KeyboardInterrupt` on heatmap           | Seaborn rendering too slow                      | Fixed in latest `02_preprocess_malmem.py` — uses bar chart instead |
 
 ---
 
 ## Team
 
-| Name | Student ID | Role |
-|------|-----------|------|
-| Tee Ren Hang | 106214467 | Project Manager, Report Lead, UI/UX Designer |
-| Ng Yong Hin | 106214441 | Technical Lead, ML Implementation |
+| Name         | Student ID | Role                                         |
+| ------------ | ---------- | -------------------------------------------- |
+| Tee Ren Hang | 106214467  | Project Manager, Report Lead, UI/UX Designer |
+| Ng Yong Hin  | 106214441  | Technical Lead, ML Implementation            |
 
 **Lecturer:** Mr. Faizal | **Section:** C1 | **Unit:** COS30049
