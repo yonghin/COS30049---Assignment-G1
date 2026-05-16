@@ -1,4 +1,4 @@
-# 🛡️ CyberShield AI — Spam & Malware Detection System
+# 🛡️ NTCyber AI — Spam & Malware Detection System
 
 > **COS30049 Computing Technology Innovation Project — Assignment 2**
 > Session 1 | Group 1 | Section C1
@@ -25,7 +25,7 @@ A machine learning system that detects spam messages and malware threats using c
 
 ## Project Overview
 
-CyberShield AI implements six machine learning models across three method types:
+NTCyber AI implements six machine learning models across three method types:
 
 | Method Type    | Models                          | Task                              |
 | -------------- | ------------------------------- | --------------------------------- |
@@ -40,7 +40,7 @@ CyberShield AI implements six machine learning models across three method types:
 ## Project Structure
 
 ```
-CyberShield-AI/
+COS30049---Assignment-G1/
 │
 ├── data/
 │   ├── processed/                  ← Auto-generated after preprocessing
@@ -419,7 +419,7 @@ import pickle, re, numpy as np, pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 print("=" * 55)
-print("  CyberShield AI — Prediction Demo")
+print("  NTCyber AI — Prediction Demo")
 print("=" * 55)
 
 # ── Spam prediction (Naive Bayes) ──────────────────────
