@@ -483,7 +483,7 @@ print("\n✅ Prediction demo complete.")
 | SVM                 | Classification | Malware detection | 99.92%   | 0.9993               | 1.0000  |
 | Random Forest       | Classification | Spam detection    | 98.39%   | 0.9839               | 0.9978  |
 | Naive Bayes         | Classification | Spam detection    | 96.71%   | 0.9662               | 0.9787  |
-| Logistic Regression | Regression     | Spam probability  | 96.13%   | 0.9591               | 0.9899  |
+| Logistic Regression | Regression     | Spam probability  | 96.13%   | 0.8276               | 0.9899  |
 | K-Means             | Clustering     | Malware grouping  | —        | Silhouette: 0.5668   | —       |
 | DBSCAN              | Clustering     | Anomaly detection | —        | 710 anomalies (4.7%) | —       |
 
