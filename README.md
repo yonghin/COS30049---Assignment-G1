@@ -41,32 +41,88 @@ NTCyber AI implements six machine learning models across three method types:
 
 ```
 COS30049---Assignment-G1/
-│
 ├── data/
-│   ├── processed/                  ← Auto-generated after preprocessing
-│   └── raw/                        ← Place downloaded datasets here
-│
+│   └── processed/          ← Auto-generated after preprocessing
+│       ├── category_mapping.json
+│       ├── emails_inti_processed.csv
+│       ├── enron_processed.csv
+│       ├── malmem_processed.csv
+│       ├── malmem_scaler.pkl
+│       ├── malware_basic_processed.csv
+│       ├── sms_spam_processed.csv
+│       ├── sms_spam_tfidf.csv
+│    └── raw/                 ← Place downloaded datasets here
+│       ├── emails_inti.csv
+│       ├── enron_spam_data.csv
+│       ├── Malware_dataset.csv
+│       ├── Obfuscated-MalMem2022.csv
+│       └── SMSSpamCollection
 ├── models/
-│   ├── 05_classification_models.py ← Random Forest, Naive Bayes, SVM
-│   ├── 06_clustering_models.py     ← K-Means, DBSCAN
-│   ├── 07_regression_model.py      ← Logistic Regression
-│   ├── 08_run_all_models.py        ← Master script (runs all models)
+│   ├── 05_classification_models.py   ← Random Forest, Naive Bayes, SVM
+│   ├── 06_clustering_models.py       ← K-Means, DBSCAN
+│   ├── 07_regression_model.py        ← Logistic Regression
+│   ├── 08_run_all_models.py          ← Master script (runs all models)
 │   ├── 09_validation_and_insights.py
 │   └── 10_fix_and_enhance_charts.py
-│
 ├── outputs/
-│   ├── models/                     ← Saved .pkl model files
-│   ├── validation/                 ← CSV results tables
-│   └── visualizations/             ← All generated charts (PNG)
-│
+│   └── models/              ← Saved .pkl model files
+│       ├── dbscan_malware.pkl
+│       ├── kmeans_malware.pkl
+│       ├── logistic_regression_spam.pkl
+│       ├── nb_spam.pkl
+│       ├── rf_spam.pkl
+│       └──  svm_malware.pkl
+│   └── validation/          ← CSV results tables
+│       ├── cross_validation_results.csv
+│       ├── error_analysis.csv
+│       ├── live_predictions.csv
+│       └── model_ranking.csv
+│   └── visualizations/      ← All generated charts (PNG)
+│       ├── classification_comparison.png
+│       ├── cluster_size_comparison.png
+│       ├── cm_nb_spam.png
+│       ├── cm_rf_spam.png
+│       ├── cm_svm_malware.png
+│       ├── cross_validation_comparison.png
+│       ├── dbscan_clusters_fixed.png
+│       ├── dbscan_clusters.png
+│       ├── emails_inti_analysis.png
+│       ├── enron_analysis.png
+│       ├── error_analysis.png
+│       ├── final_model_ranking.png
+│       ├── kmeans_clusters.png
+│       ├── kmeans_elbow.png
+│       ├── lc_lr_spam.png
+│       ├── lc_nb_spam.png
+│       ├── lc_rf_spam.png
+│       ├── lc_svm_malware.png
+│       ├── lr_coefficients.png
+│       ├── lr_confusion_matrix.png
+│       ├── lr_probability_distribution.png
+│       ├── lr_roc_curve.png
+│       ├── malmem_analysis_fixed.png
+│       ├── malmem_correlation_heatmap.png
+│       ├── malmem_feature_boxplot.png
+│       ├── malware_basic_analysis.png
+│       ├── pca_scree_plot.png
+│       ├── rf_feature_importance.png
+│       ├── roc_all_models.png
+│       ├── sms_spam_analysis.png
+│       ├── spam_keyword_heatmap.png
+│       ├── all_results_combined.csv
+│       ├── classification_results.csv
+│       ├── clustering_results.csv
+│       └── regression_results.csv
 ├── preprocessing/
-│   ├── 00_run_all_preprocessing.py ← Master script (runs all preprocessing)
+│   ├── 00_run_all_preprocessing.py   ← Master script (runs all preprocessing)
 │   ├── 01_preprocess_sms_spam.py
 │   ├── 02_preprocess_malmem.py
 │   ├── 03_preprocess_enron.py
-│   └── 04_preprocess_basic_datasets.py
-│
+│   ├── 04_preprocess_basic_datasets.py
+│   └── README_preprocessing.md
+├── .gitignore
 └── README.md
+
 ```
 
 ---
