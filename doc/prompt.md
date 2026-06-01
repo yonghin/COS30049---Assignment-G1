@@ -45,6 +45,196 @@ All paths in backend code (e.g. `outputs/models/rf_spam.pkl`, `data/processed/sm
 
 ---
 
+## Frontend Visual Design System
+
+The entire frontend uses a **dark cybersecurity theme**. All pages, components, and charts must conform to this design. Implement it through a global CSS file (`frontend/src/index.css`) and per-component CSS Modules.
+
+### Color Palette (CSS variables in `:root`)
+
+```css
+:root {
+  --bg-primary:    #0f1117;   /* page background */
+  --bg-card:       #1a1d2e;   /* card / panel */
+  --bg-input:      #0d1020;   /* inputs, textareas */
+  --bg-navbar:     #13162b;   /* top navbar */
+  --accent:        #00d4ff;   /* cyan — primary actions, links, active states */
+  --accent-dim:    #0099bb;   /* darker cyan for hover */
+  --purple:        #6c63ff;   /* secondary accent */
+  --danger:        #ff4d4d;   /* SPAM / MALWARE indicator */
+  --success:       #00cc88;   /* HAM / BENIGN indicator */
+  --warning:       #ffb347;   /* anomaly */
+  --text-primary:  #e8eaf0;   /* main body text */
+  --text-muted:    #8892a4;   /* labels, placeholders */
+  --border:        #2a2d3e;   /* card borders, dividers */
+  --shadow:        0 4px 24px rgba(0, 0, 0, 0.4);
+}
+```
+
+### Global `frontend/src/index.css`
+
+```css
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-dim); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+```
+
+### Layout
+
+```
+┌─────────────────────────────────────┐  height: 60px; position: fixed; top: 0
+│  NavBar (full width, fixed)         │  background: var(--bg-navbar)
+│  NTCyber AI  |  Dashboard  Spam ... │  border-bottom: 1px solid var(--border)
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐  margin-top: 60px; padding: 24px
+│  Page content                       │  max-width: 1400px; margin: 60px auto 0
+│  ┌──────────┐  ┌──────────┐         │
+│  │  Card    │  │  Card    │         │  Cards: background var(--bg-card)
+│  └──────────┘  └──────────┘         │         border-radius: 12px
+│  ┌──────────────────────────┐       │         border: 1px solid var(--border)
+│  │  Chart (full width)      │       │         padding: 20px
+│  └──────────────────────────┘       │         box-shadow: var(--shadow)
+└─────────────────────────────────────┘
+```
+
+### Shared Component Visual Specs
+
+**NavBar:**
+- Logo text: `NTCyber AI` in `var(--accent)`, font-weight 700, font-size 18px
+- Nav links: `var(--text-muted)`, font-size 14px. Active link: `var(--accent)` with bottom border 2px `var(--accent)`
+- Right side: "NTCyber AI Platform" subtitle in `var(--text-muted)`, font-size 12px
+
+**Buttons (primary):**
+```css
+background: var(--accent); color: #000; border: none; border-radius: 8px;
+padding: 10px 20px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+/* hover: */ background: var(--accent-dim);
+/* disabled: */ opacity: 0.5; cursor: not-allowed;
+```
+
+**Buttons (secondary / outline):**
+```css
+background: transparent; color: var(--accent);
+border: 1px solid var(--accent); border-radius: 8px; padding: 10px 20px;
+```
+
+**Buttons (danger):**
+```css
+background: transparent; color: var(--danger); border: 1px solid var(--danger);
+```
+
+**Inputs / Textareas:**
+```css
+background: var(--bg-input); color: var(--text-primary);
+border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+width: 100%;
+/* focus: */ border-color: var(--accent); outline: none;
+```
+
+**Cards (stat/metric):**
+```css
+background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+padding: 20px; display: flex; flex-direction: column; gap: 8px;
+/* value: */ font-size: 28px; font-weight: 700; color: var(--accent);
+/* label: */ font-size: 12px; color: var(--text-muted); text-transform: uppercase;
+```
+
+**Tabs:**
+```css
+display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+/* tab button: */ background: none; border: none; padding: 10px 20px;
+  color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+/* active tab: */ color: var(--accent); border-bottom-color: var(--accent);
+```
+
+**Tables (ResultsTable):**
+```css
+/* container: */ overflow-x: auto; border-radius: 8px; border: 1px solid var(--border);
+/* th: */ background: #13162b; color: var(--text-muted); text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.05em; padding: 12px 16px; text-align: left;
+/* td: */ padding: 10px 16px; border-bottom: 1px solid var(--border);
+/* tr:hover: */ background: rgba(0, 212, 255, 0.04);
+```
+
+**ErrorBanner:**
+```css
+background: rgba(255, 77, 77, 0.15); border: 1px solid var(--danger);
+border-radius: 8px; padding: 12px 16px; color: var(--danger);
+display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+```
+
+**ProgressIndicator (spinner):**
+```css
+/* spinner div: */ width: 32px; height: 32px; border: 3px solid var(--border);
+border-top-color: var(--accent); border-radius: 50%;
+animation: spin 0.8s linear infinite; margin: 20px auto;
+@keyframes spin { to { transform: rotate(360deg); } }
+```
+
+**FileUploadWidget:**
+```css
+border: 2px dashed var(--border); border-radius: 12px; padding: 32px;
+text-align: center; cursor: pointer; transition: border-color 0.2s;
+/* hover/dragover: */ border-color: var(--accent);
+/* icon: */ font-size: 32px; color: var(--text-muted); margin-bottom: 8px;
+```
+
+### Dashboard Grid Layout
+```css
+/* stat cards row */
+.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+/* charts row */
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+/* full width sections */
+.fullWidth { grid-column: 1 / -1; }
+```
+
+### Plotly Dark Theme Layout Object
+
+Every chart must use this shared layout base. Create `src/components/charts/chartTheme.js`:
+
+```javascript
+export const DARK_LAYOUT = {
+  paper_bgcolor: '#1a1d2e',
+  plot_bgcolor:  '#1a1d2e',
+  font: { color: '#e8eaf0', family: 'Inter, system-ui, sans-serif', size: 12 },
+  xaxis: {
+    gridcolor: '#2a2d3e', zerolinecolor: '#2a2d3e',
+    tickfont: { color: '#8892a4' }, titlefont: { color: '#8892a4' },
+  },
+  yaxis: {
+    gridcolor: '#2a2d3e', zerolinecolor: '#2a2d3e',
+    tickfont: { color: '#8892a4' }, titlefont: { color: '#8892a4' },
+  },
+  legend: { bgcolor: 'transparent', font: { color: '#e8eaf0' }, orientation: 'h', y: -0.2 },
+  margin: { l: 60, r: 30, t: 50, b: 60 },
+  height: 400,
+}
+
+export const CHART_CONFIG = {
+  responsive: true,
+  displayModeBar: true,
+  toImageButtonOptions: { format: 'png', scale: 2 },
+  modeBarButtonsToRemove: ['sendDataToCloud'],
+}
+```
+
+---
+
 ## Actual pkl Structures (Critical — differs from proposal)
 
 | File | Pickled value |
@@ -158,7 +348,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 pydantic==2.9.2
 python-multipart==0.0.12
-scikit-learn==1.5.2
+scikit-learn==1.7.2
 pandas==2.2.3
 numpy==1.26.4
 httpx==0.27.2
@@ -269,6 +459,10 @@ export default App
 Create placeholder page files in `src/pages/`: `Dashboard.jsx`, `SpamDetector.jsx`, `MalwareDetector.jsx`, `ModelAnalytics.jsx`. Each renders `<h1>PageName</h1>`.
 
 Create empty `src/api/` and `src/components/` directories.
+
+**Replace the generated `src/index.css`** with the global CSS from the "Frontend Visual Design System" section of this prompt (color variables, body, scrollbar styles).
+
+**`src/main.jsx`** must import `./index.css` before `App` so the design system loads globally.
 
 Add to `package.json` scripts:
 ```json
@@ -529,7 +723,7 @@ def test_to_time_series_counts_correctly():
 Implement `SpamPredictionResult`, `clean_text()`, and the three prediction pipelines exactly as specified in `doc/detailed-design.md` section 3.3.
 
 **Key pipeline rules:**
-- **RF** uses `feature_cols` from `registry['rf_spam']`: build `message_length`, `word_count`, `has_<kw>` features (NOT TF-IDF)
+- **RF** uses `feature_cols` from `registry['rf_spam']`. The actual pkl contains `feature_cols = ['message_length', 'word_count']` — only 2 engineered features. Do NOT use TF-IDF for RF. The code must iterate `feature_cols` dynamically (not hardcode them) in case the list differs.
 - **NB** uses TF-IDF → `.toarray()` → `nb_scaler.transform()` → `nb.predict_proba()`
 - **LR** uses TF-IDF → `.toarray()` → `lr_scaler.transform()` → `lr.predict_proba()`
 - `label = "SPAM" if spam_p >= 0.5 else "HAM"`, `confidence = max(spam_prob, ham_prob)`
@@ -623,16 +817,24 @@ from backend.services.spam_service import predict_single, predict_batch, clean_t
 def registry():
     return load_models()
 
-@pytest.mark.parametrize("model_name", ["rf_spam", "nb_spam", "logistic_regression_spam"])
+@pytest.mark.parametrize("model_name", ["nb_spam", "logistic_regression_spam"])
 def test_spam_text_classified_as_spam(registry, model_name):
     result = predict_single("Congratulations! You WON a FREE iPhone! Call now to claim!", model_name, registry)
     assert result.label == "SPAM"
     assert result.spam_prob > 0.5
 
-@pytest.mark.parametrize("model_name", ["rf_spam", "nb_spam", "logistic_regression_spam"])
+@pytest.mark.parametrize("model_name", ["nb_spam", "logistic_regression_spam"])
 def test_ham_text_classified_as_ham(registry, model_name):
     result = predict_single("Are you coming to lunch today?", model_name, registry)
     assert result.label == "HAM"
+
+def test_rf_spam_returns_valid_result(registry):
+    # RF uses only message_length + word_count — no content semantics, so only check structure
+    result = predict_single("Congratulations! You WON a FREE iPhone! Call now to claim!", "rf_spam", registry)
+    assert result.label in ("SPAM", "HAM")
+    assert 0.0 <= result.spam_prob <= 1.0
+    assert 0.0 <= result.ham_prob <= 1.0
+    assert result.confidence == max(result.spam_prob, result.ham_prob)
 
 def test_unknown_model_raises_value_error(registry):
     with pytest.raises(ValueError, match="Unknown model"):
@@ -1591,32 +1793,142 @@ it('calls onFileSelected for valid extension', async () => {
 ### SUB-AGENT 15: chart-components
 
 **Files in `frontend/src/components/charts/`:**
+- `chartTheme.js` — shared Plotly layout and config constants
+- `BarChart.jsx`
+- `LineChart.jsx`
+- `GaugeChart.jsx`
+- `ScatterPlot.jsx`
+- `Heatmap.jsx`
 
-Implement five Plotly chart wrappers as specified in `doc/detailed-design.md` section 5.4.
+#### Why charts fail to render — and the fix
 
-All charts follow this pattern:
+**Root cause:** `Plotly.react()` fails silently when the div has no prior plot. Plotly also renders at 0 height unless `height` is explicit in the layout. The correct pattern is:
+1. Use **`Plotly.newPlot`** (not `Plotly.react`) — handles both first render and re-renders
+2. Set **`height: 400`** (or desired px) in the layout object — Plotly ignores CSS height
+3. Call **`Plotly.purge(divRef.current)`** in the `useEffect` cleanup to prevent memory leaks and "already initialized" errors when React re-mounts the component
+
+**`src/components/charts/chartTheme.js`** (copy exactly from the design system section above — `DARK_LAYOUT` and `CHART_CONFIG` exports).
+
+**Mandatory pattern for every chart component:**
+
 ```jsx
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js'
+import { DARK_LAYOUT, CHART_CONFIG } from './chartTheme'
 
 function SomeChart({ propA, propB }) {
   const divRef = useRef(null)
+
   useEffect(() => {
     if (!divRef.current) return
-    const traces = /* build traces from props */
-    const layout = { title: '...', autosize: true }
-    const config = { displayModeBar: true, toImageButtonOptions: { format: 'png' }, responsive: true }
-    Plotly.react(divRef.current, traces, layout, config)
+
+    const traces = [/* build from props */]
+    const layout = {
+      ...DARK_LAYOUT,
+      title: { text: 'Chart Title', font: { color: '#e8eaf0', size: 14 } },
+      // override specific axes, annotations etc.
+    }
+
+    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+
+    return () => {
+      if (divRef.current) Plotly.purge(divRef.current)
+    }
   }, [propA, propB])
-  return <div ref={divRef} style={{ width: '100%' }} />
+
+  // The outer div MUST have explicit minHeight — acts as fallback and reserve space
+  return <div ref={divRef} style={{ width: '100%', minHeight: '400px' }} />
 }
 ```
 
-**GaugeChart** color rule: `color: spamProb >= 0.5 ? 'red' : 'green'` using Plotly indicator `gauge.bar.color`.
+**Never use `Plotly.react` in the initial render.** `Plotly.newPlot` handles both first render and updates correctly.
 
-**ScatterPlot** four traces: BENIGN (green circles), MALWARE (red circles), anomalies (black X markers), plus text annotations for cluster IDs.
+#### Per-chart implementation details
 
-**Tests in `frontend/src/components/charts/__tests__/`** — mock Plotly and test that components render without crashing:
+**`BarChart.jsx`** — model accuracy comparison
+```javascript
+// Three grouped bar traces using DARK_LAYOUT colors
+const traces = [
+  { x: models, y: accuracy, name: 'Accuracy', type: 'bar', marker: { color: '#00d4ff' } },
+  { x: models, y: f1,       name: 'F1 Score', type: 'bar', marker: { color: '#6c63ff' } },
+  { x: models, y: auc,      name: 'AUC',      type: 'bar', marker: { color: '#00cc88' } },
+]
+const layout = { ...DARK_LAYOUT, barmode: 'group', yaxis: { ...DARK_LAYOUT.yaxis, range: [0, 1.05] } }
+```
+
+**`LineChart.jsx`** — time series (live predictions + ROC curve)
+```javascript
+// Spam series (cyan) + Malware series (danger red) OR fpr/tpr for ROC
+// When used as ROC curve: x=fpr, y=tpr; add diagonal reference line
+const spamTrace  = { x: spamSeries.map(p=>p.timestamp),    y: spamSeries.map(p=>p.count),    name: 'Spam',    line: { color: '#00d4ff' } }
+const malwareTrace = { x: malwareSeries.map(p=>p.timestamp), y: malwareSeries.map(p=>p.count), name: 'Malware', line: { color: '#ff4d4d' } }
+// For ROC usage (ModelAnalytics): accept fpr/tpr/auc props and render accordingly
+```
+
+**`GaugeChart.jsx`** — spam probability gauge
+```javascript
+// spamProb === null → render empty gauge at 0
+const barColor = (spamProb ?? 0) >= 0.5 ? '#ff4d4d' : '#00cc88'
+const traces = [{
+  type: 'indicator', mode: 'gauge+number+delta',
+  value: Math.round((spamProb ?? 0) * 100),
+  number: { suffix: '%', font: { color: '#e8eaf0', size: 36 } },
+  gauge: {
+    axis: { range: [0, 100], tickcolor: '#8892a4' },
+    bar: { color: barColor },
+    bgcolor: '#0d1020',
+    bordercolor: '#2a2d3e',
+    steps: [
+      { range: [0, 50],  color: 'rgba(0,204,136,0.15)' },
+      { range: [50, 100], color: 'rgba(255,77,77,0.15)' },
+    ],
+    threshold: { line: { color: barColor, width: 3 }, thickness: 0.75, value: (spamProb ?? 0) * 100 },
+  },
+}]
+const layout = { ...DARK_LAYOUT, height: 300, margin: { l: 30, r: 30, t: 30, b: 30 } }
+```
+
+**`ScatterPlot.jsx`** — PCA 2D malware scatter
+```javascript
+// Split points into four groups by label + anomaly flag
+const benignNormal  = points.filter(p => p.label==='BENIGN'  && !p.isAnomaly)
+const malwareNormal = points.filter(p => p.label==='MALWARE' && !p.isAnomaly)
+const anomalies     = points.filter(p => p.isAnomaly)
+
+const traces = [
+  { x: benignNormal.map(p=>p.x),  y: benignNormal.map(p=>p.y),
+    mode: 'markers', name: 'Benign',
+    marker: { color: '#00cc88', size: 8, opacity: 0.8 },
+    text: benignNormal.map(p=>`Row ${p.rowId} | Cluster ${p.cluster}`) },
+  { x: malwareNormal.map(p=>p.x), y: malwareNormal.map(p=>p.y),
+    mode: 'markers', name: 'Malware',
+    marker: { color: '#ff4d4d', size: 8, opacity: 0.8 },
+    text: malwareNormal.map(p=>`Row ${p.rowId} | Cluster ${p.cluster}`) },
+  { x: anomalies.map(p=>p.x), y: anomalies.map(p=>p.y),
+    mode: 'markers', name: 'Anomaly',
+    marker: { color: '#ffb347', symbol: 'x', size: 12, line: { width: 2, color: '#ffb347' } } },
+]
+```
+
+**`Heatmap.jsx`** — confusion matrix
+```javascript
+// matrix = [[TN, FP], [FN, TP]], labels e.g. ['Ham','Spam']
+// Annotate each cell with its value
+const traces = [{
+  type: 'heatmap', z: matrix, x: labels, y: labels,
+  colorscale: [[0,'#1a1d2e'],[0.5,'#0099bb'],[1,'#00d4ff']],
+  showscale: false,
+  text: matrix.map(row => row.map(v => String(v))),
+  texttemplate: '%{text}', textfont: { color: '#e8eaf0', size: 16 },
+}]
+const layout = {
+  ...DARK_LAYOUT, height: 360,
+  xaxis: { ...DARK_LAYOUT.xaxis, title: 'Predicted' },
+  yaxis: { ...DARK_LAYOUT.yaxis, title: 'Actual', autorange: 'reversed' },
+}
+```
+
+**Tests in `frontend/src/components/charts/__tests__/`** — mock Plotly so jsdom doesn't need a real canvas:
 
 ```javascript
 // charts.test.jsx
@@ -1628,39 +1940,47 @@ import GaugeChart from '../GaugeChart'
 import ScatterPlot from '../ScatterPlot'
 import Heatmap from '../Heatmap'
 
-vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn() }))
+vi.mock('plotly.js', () => ({
+  newPlot: vi.fn(),
+  purge: vi.fn(),
+}))
 
 describe('Chart components smoke tests', () => {
-  it('BarChart renders', () => {
+  it('BarChart renders container div', () => {
     const { container } = render(
       <BarChart models={['rf_spam']} accuracy={[0.98]} f1={[0.98]} auc={[0.99]} />
     )
-    expect(container.firstChild).toBeTruthy()
+    expect(container.querySelector('div')).toBeTruthy()
   })
-  it('LineChart renders', () => {
+  it('LineChart renders container div', () => {
     const { container } = render(<LineChart spamSeries={[]} malwareSeries={[]} />)
-    expect(container.firstChild).toBeTruthy()
+    expect(container.querySelector('div')).toBeTruthy()
   })
-  it('GaugeChart renders', () => {
+  it('GaugeChart renders container div', () => {
     const { container } = render(<GaugeChart spamProb={0.8} label="SPAM" />)
-    expect(container.firstChild).toBeTruthy()
+    expect(container.querySelector('div')).toBeTruthy()
   })
-  it('ScatterPlot renders', () => {
+  it('ScatterPlot renders container div', () => {
     const { container } = render(
       <ScatterPlot pcaData={[[0,1]]} labels={['BENIGN']} clusters={[0]} anomalies={[false]} rowIds={[1]} />
     )
-    expect(container.firstChild).toBeTruthy()
+    expect(container.querySelector('div')).toBeTruthy()
   })
-  it('Heatmap renders', () => {
+  it('Heatmap renders container div', () => {
     const { container } = render(
       <Heatmap matrix={[[100,5],[3,200]]} labels={['Ham','Spam']} />
     )
-    expect(container.firstChild).toBeTruthy()
+    expect(container.querySelector('div')).toBeTruthy()
+  })
+  it('Plotly.newPlot called when BarChart mounts', () => {
+    const Plotly = require('plotly.js')
+    render(<BarChart models={['m']} accuracy={[0.9]} f1={[0.9]} auc={[0.9]} />)
+    expect(Plotly.newPlot).toHaveBeenCalled()
   })
 })
 ```
 
-**Done when:** All 5 smoke tests pass.
+**Done when:** All 6 chart tests pass.
 
 ---
 
@@ -1675,11 +1995,19 @@ Implement state, effects, and layout as specified in `doc/detailed-design.md` se
 **Layout order:**
 1. `<NavBar />`
 2. `<ErrorBanner message={error} onDismiss={() => setError(null)} />`
-3. Model performance cards — map over `models`, show accuracy and F1
-4. `<BarChart models={...} accuracy={...} f1={...} auc={...} />`
-5. `<LineChart spamSeries={...} malwareSeries={...} title="Live Prediction Volume" />`
-6. `<ResultsTable ...>` for recent 10 predictions
-7. `<ExportButton data={recentPredictions} filename="predictions.csv" />`
+3. Model performance cards — 4-column grid (`statsGrid`), one card per model showing accuracy + F1. Use the stat card style from the design system.
+4. Two-column row (`chartsRow`): `<BarChart ...>` on left, `<LineChart ...>` on right
+5. Full-width card: `<ResultsTable ...>` for recent 10 predictions + `<ExportButton>` below it
+
+**`Dashboard.module.css`** must include:
+```css
+.page     { padding: 24px; max-width: 1400px; margin: 60px auto 0; }
+.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.card      { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.statValue { font-size: 28px; font-weight: 700; color: var(--accent); }
+.statLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+```
 
 **`frontend/src/pages/__tests__/Dashboard.test.jsx`:**
 ```jsx
@@ -1690,7 +2018,7 @@ import { http, HttpResponse } from 'msw'
 import { vi, describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import Dashboard from '../Dashboard'
 
-vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn() }))
+vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn(), purge: vi.fn() }))
 
 const server = setupServer(
   http.get('http://localhost:8000/api/models', () =>
@@ -1723,13 +2051,26 @@ describe('Dashboard', () => {
 
 Implement as specified in `doc/detailed-design.md` section 5.5 (SpamDetector.jsx).
 
-**Two tabs:** "Single Message" and "Batch Upload".
+**Two tabs:** "Single Message" and "Batch Upload". Use the tab style from the design system.
 
-**Single tab:** textarea, model selector (`rf_spam | nb_spam | logistic_regression_spam`), Analyze button. Client-side: reject if `text.trim().length < 3`. On success: show GaugeChart + label + confidence; append to local history.
+**Single tab layout:**
+- Left column (40%): textarea (`min-height: 120px`), model selector `<select>`, Analyze button (primary style)
+- Right column (60%): GaugeChart (height 300), result label chip (`SPAM` in danger color / `HAM` in success color) + confidence %
 
-**Batch tab:** FileUploadWidget (`.txt,.csv`), model selector, Analyze button. On success: summary counts + ResultsTable.
+**Batch tab layout:**
+- FileUploadWidget (`.txt,.csv`), model selector, Analyze button
+- After result: summary row (3 stat cards: Total / SPAM / HAM), then ResultsTable
 
-**Both tabs:** ExportButton for results.
+**`SpamDetector.module.css`** must include:
+```css
+.page      { padding: 24px; max-width: 1400px; margin: 60px auto 0; }
+.card      { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.singleLayout { display: grid; grid-template-columns: 2fr 3fr; gap: 24px; }
+.resultChip   { display: inline-block; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 18px; }
+.spam  { background: rgba(255,77,77,0.2); color: var(--danger); border: 1px solid var(--danger); }
+.ham   { background: rgba(0,204,136,0.2); color: var(--success); border: 1px solid var(--success); }
+.select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; width: 100%; }
+```
 
 **`frontend/src/pages/__tests__/SpamDetector.test.jsx`:**
 ```jsx
@@ -1740,7 +2081,7 @@ import { http, HttpResponse } from 'msw'
 import { vi, describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import SpamDetector from '../SpamDetector'
 
-vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn() }))
+vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn(), purge: vi.fn() }))
 
 const server = setupServer(
   http.post('http://localhost:8000/api/spam/predict', () =>
@@ -1778,7 +2119,20 @@ Implement as specified in `doc/detailed-design.md` section 5.5 (MalwareDetector.
 
 **"Load Sample Data":** calls `getSampleData()` → converts `{columns, rows}` to CSV string → creates `new File([csvString], 'sample.csv', {type:'text/csv'})` → sets as current file.
 
-**On predict success:** show four summary cards (total, malware_count, benign_count, anomaly_count), ResultsTable, ScatterPlot, ExportButton.
+**On predict success:** show four summary stat cards (total, malware_count, benign_count, anomaly_count), then two-column row (ScatterPlot left, ResultsTable right), then ExportButton.
+
+**`MalwareDetector.module.css`** must include:
+```css
+.page       { padding: 24px; max-width: 1400px; margin: 60px auto 0; }
+.card       { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.uploadRow  { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.statsGrid  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.resultsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.statValue  { font-size: 28px; font-weight: 700; color: var(--accent); }
+.malware    { color: var(--danger); }
+.benign     { color: var(--success); }
+.anomaly    { color: var(--warning); }
+```
 
 **`frontend/src/pages/__tests__/MalwareDetector.test.jsx`:**
 ```jsx
@@ -1789,7 +2143,7 @@ import { http, HttpResponse } from 'msw'
 import { vi, describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import MalwareDetector from '../MalwareDetector'
 
-vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn() }))
+vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn(), purge: vi.fn() }))
 
 const sampleRows = Array(10).fill([0.1, 0.2])
 const server = setupServer(
@@ -1832,9 +2186,19 @@ describe('MalwareDetector', () => {
 
 Implement as specified in `doc/detailed-design.md` section 5.5 (ModelAnalytics.jsx).
 
-**Tabs:** "RF Spam" → `rf_spam`, "Naive Bayes" → `nb_spam`, "Logistic Regression" → `logistic_regression_spam`, "SVM Malware" → `svm_malware`.
+**Tabs:** "RF Spam" → `rf_spam`, "Naive Bayes" → `nb_spam`, "Logistic Regression" → `logistic_regression_spam`, "SVM Malware" → `svm_malware`. Use the tab style from the design system.
 
-**On tab switch:** fetch analytics if not already in cache. Show Heatmap (confusion matrix), ROC curve as a LineChart with `fpr`/`tpr` data, and BarChart for feature importance (only if `feature_importance !== null`).
+**On tab switch:** fetch analytics if not already in cache. Layout:
+- Top row (2 columns): Heatmap (confusion matrix, left) + ROC curve LineChart (right, `fpr` on x-axis, `tpr` on y-axis, include dashed diagonal reference line, annotate AUC in title)
+- Bottom row (full width): horizontal BarChart for feature importance — only render if `feature_importance !== null`; otherwise show a muted "Not available for this model" message
+
+**`ModelAnalytics.module.css`** must include:
+```css
+.page       { padding: 24px; max-width: 1400px; margin: 60px auto 0; }
+.card       { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.topRow     { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.noData     { color: var(--text-muted); text-align: center; padding: 40px; font-size: 13px; }
+```
 
 **`frontend/src/pages/__tests__/ModelAnalytics.test.jsx`:**
 ```jsx
@@ -1845,7 +2209,7 @@ import { http, HttpResponse } from 'msw'
 import { vi, describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import ModelAnalytics from '../ModelAnalytics'
 
-vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn() }))
+vi.mock('plotly.js', () => ({ react: vi.fn(), newPlot: vi.fn(), purge: vi.fn() }))
 
 const mockData = {
   model: 'rf_spam',

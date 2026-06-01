@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Auto-append a Change Log entry to the vibe-coding build log on every commit.
+#
+# Enable once per clone (git does NOT auto-enable a tracked hooks dir):
+#   git config core.hooksPath .githooks
+#
+# The entry for commit N lands in the working tree and is committed with N+1.
+# This runs in post-commit, so its exit code never blocks a commit.
+set -u
+
+LOG="doc/VIBE_CODING_LOG.md"
+[ -f "$LOG" ] || exit 0
+
+hash=$(git rev-parse --short HEAD 2>/dev/null) || exit 0
+date=$(git log -1 --date=short --pretty=%cd 2>/dev/null)
+subject=$(git log -1 --pretty=%s 2>/dev/null)
+
+# List of files changed in this commit, excluding the log itself.
+all=$(git show --name-only --pretty=format: HEAD | sed '/^$/d' | grep -v -x "$LOG")
+
+# If the commit only touched the log, skip to avoid self-referential noise.
+[ -z "$all" ] && exit 0
+
+# Comma-separated, capped at MAX files so the entry stays readable.
+MAX=8
+n=$(printf '%s\n' "$all" | grep -c .)
+files=$(printf '%s\n' "$all" | head -n "$MAX" | tr '\n' '~' | sed 's/~$//; s/~/, /g')
+[ "$n" -gt "$MAX" ] && files="${files}, …(+$((n - MAX)) more)"
+
+entry="- **$date** — \`$hash\` ${subject} _(files: ${files})_"
+
+# Insert the entry just below the "Append newest first" marker (newest first).
+# If the marker is missing, append at end of file as a fallback.
+tmp="$(mktemp)" || exit 0
+awk -v e="$entry" '
+  { print }
+  /Append newest first/ && !done { print ""; print e; done=1 }
+  END { if (!done) print e }
+' "$LOG" > "$tmp" && mv "$tmp" "$LOG"
+
+exit 0
