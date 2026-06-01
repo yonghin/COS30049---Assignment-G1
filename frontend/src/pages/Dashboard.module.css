@@ -1,0 +1,8 @@
+.page     { padding: 24px; max-width: 1400px; margin: 60px auto 0; }
+.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.card      { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.statValue { font-size: 28px; font-weight: 700; color: var(--accent); }
+.statLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.sectionTitle { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+.exportRow { margin-top: 16px; display: flex; justify-content: flex-end; }

@@ -1,0 +1,35 @@
+:root {
+  --bg-primary:    #0f1117;   /* page background */
+  --bg-card:       #1a1d2e;   /* card / panel */
+  --bg-input:      #0d1020;   /* inputs, textareas */
+  --bg-navbar:     #13162b;   /* top navbar */
+  --accent:        #00d4ff;   /* cyan — primary actions, links, active states */
+  --accent-dim:    #0099bb;   /* darker cyan for hover */
+  --purple:        #6c63ff;   /* secondary accent */
+  --danger:        #ff4d4d;   /* SPAM / MALWARE indicator */
+  --success:       #00cc88;   /* HAM / BENIGN indicator */
+  --warning:       #ffb347;   /* anomaly */
+  --text-primary:  #e8eaf0;   /* main body text */
+  --text-muted:    #8892a4;   /* labels, placeholders */
+  --border:        #2a2d3e;   /* card borders, dividers */
+  --shadow:        0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-dim); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
