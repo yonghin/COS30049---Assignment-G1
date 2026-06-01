@@ -197,6 +197,8 @@ The Change Log below is appended **automatically on every commit** by a tracked 
 [`.githooks/post-commit`](../.githooks/post-commit). It inserts one line (date · short hash ·
 commit subject · up to 8 changed files) just under the "Append newest first" marker. The entry for
 
+- **2026-06-01** — `baf6a8b` Implement frontend visual design system with dark theme, global CSS, and component styles; update backend progress tracking to reflect completed tasks. _(files: .githooks/post-commit, README.md, doc/prompt.md, doc/tasks/progress.md)_
+
 - **2026-06-01** — `f4ef759` Add chart components, styling, and testing for dashboard and malware detection features _(files: frontend/.gitignore, frontend/README.md, frontend/eslint.config.js, frontend/index.html, frontend/package-lock.json, frontend/package.json, frontend/public/favicon.svg, frontend/public/icons.svg, …(+51 more))_
 
 - **2026-06-01** — `88b9854` Add analytics, malware, and spam prediction routers and services _(files: backend/__init__.py, backend/__pycache__/__init__.cpython-313.pyc, backend/__pycache__/history_store.cpython-313.pyc, backend/__pycache__/main.cpython-313.pyc, backend/history_store.py, backend/main.py, backend/requirements.txt, backend/routers/__init__.py, …(+41 more))_
