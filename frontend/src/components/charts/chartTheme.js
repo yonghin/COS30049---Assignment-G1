@@ -47,6 +47,7 @@ export const DARK_LAYOUT = getChartLayout()
 export const CHART_CONFIG = {
   responsive: true,
   displayModeBar: true,
+  displaylogo: false,
   toImageButtonOptions: { format: 'png', scale: 2 },
-  modeBarButtonsToRemove: ['sendDataToCloud'],
+  modeBarButtonsToRemove: ['sendDataToCloud', 'select2d', 'lasso2d'],
 }
