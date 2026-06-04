@@ -38,7 +38,6 @@ function NavBar() {
         >
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        <span className={styles.subtitle}>NTCyber AI Platform</span>
       </div>
     </nav>
   )

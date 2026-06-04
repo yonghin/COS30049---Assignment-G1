@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback } from 'react'
 
 const STORAGE_KEY = 'ntcyber.theme'
 
@@ -20,8 +20,9 @@ function readInitialTheme() {
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(readInitialTheme)
 
-  // Reflect the theme onto <html data-theme> so the CSS variables in index.css apply.
-  useEffect(() => {
+  // Reflect the theme onto <html data-theme> synchronously (before useEffect) so that
+  // chart useEffect hooks read the correct CSS variables on the same render cycle.
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme
     try {
       window.localStorage.setItem(STORAGE_KEY, theme)
