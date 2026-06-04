@@ -197,6 +197,8 @@ The Change Log below is appended **automatically on every commit** by a tracked 
 [`.githooks/post-commit`](../.githooks/post-commit). It inserts one line (date · short hash ·
 commit subject · up to 8 changed files) just under the "Append newest first" marker. The entry for
 
+- **2026-06-04** — `766a80b` Spam Sample _(files: doc/sample/spam/README.md, doc/sample/spam/ham_samples.txt, doc/sample/spam/mixed_samples.csv, doc/sample/spam/rf_spam_samples.csv, doc/sample/spam/spam_samples.txt)_
+
 - **2026-06-04** — `606c0bd` Malware sample s _(files: doc/sample/malware/README.md, doc/sample/malware/benign_samples.csv, doc/sample/malware/malware_samples.csv, doc/sample/malware/mixed_samples.csv)_
 
 - **2026-06-04** — `44a2272` Website Enhancement v2 _(files: backend/routers/__pycache__/system.cpython-313.pyc, backend/routers/system.py, doc/website_enhancement_proposal_v2.md, frontend/src/App.jsx, frontend/src/components/Footer.jsx, frontend/src/components/Footer.module.css, frontend/src/components/Layout.jsx, frontend/src/components/Layout.module.css, …(+33 more))_
