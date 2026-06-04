@@ -18,7 +18,7 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
     // Close the loop by repeating the first metric/value at the end.
     const closedMetrics = metrics.length ? [...metrics, metrics[0]] : []
     const traces = series.map((s, i) => {
-      const color = PALETTE[i % PALETTE.length]
+      const color = s.color ?? PALETTE[i % PALETTE.length]
       const vals = s.values ?? []
       return {
         type: 'scatterpolar',

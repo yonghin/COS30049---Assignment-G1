@@ -1,41 +1,62 @@
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg-primary:    #0f1117;   /* page background */
-  --bg-card:       #1a1d2e;   /* card / panel */
-  --bg-input:      #0d1020;   /* inputs, textareas */
-  --bg-navbar:     #13162b;   /* top navbar */
-  --accent:        #00d4ff;   /* cyan — primary actions, links, active states */
-  --accent-dim:    #0099bb;   /* darker cyan for hover */
-  --purple:        #6c63ff;   /* secondary accent */
-  --danger:        #ff4d4d;   /* SPAM / MALWARE indicator */
-  --success:       #00cc88;   /* HAM / BENIGN indicator */
-  --warning:       #ffb347;   /* anomaly */
-  --text-primary:  #e8eaf0;   /* main body text */
-  --text-muted:    #8892a4;   /* labels, placeholders */
-  --border:        #2a2d3e;   /* card borders, dividers */
+  --bg-primary:    #0f1117;
+  --bg-card:       #1a1d2e;
+  --bg-input:      #0d1020;
+  --bg-navbar:     #13162b;
+  --accent:        #00d4ff;
+  --accent-dim:    #0099bb;
+  --purple:        #6c63ff;
+  --danger:        #ff4d4d;
+  --success:       #00cc88;
+  --warning:       #ffb347;
+  --text-primary:  #e8eaf0;
+  --text-muted:    #8892a4;
+  --border:        #2a2d3e;
   --shadow:        0 4px 24px rgba(0, 0, 0, 0.4);
-  --table-head:    #13162b;   /* results-table header bg */
+  --table-head:    #13162b;
+  --navbar-text:        #e8eaf0;
+  --navbar-text-muted:  #8892a4;
 }
 
-/* Light theme — overrides the same variables when <html data-theme="light">. */
+/* Light theme — deep blue palette with a dark navy navbar for a polished look. */
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg-primary:    #f4f6fb;
-  --bg-card:       #ffffff;
-  --bg-input:      #eef1f7;
-  --bg-navbar:     #ffffff;
-  --accent:        #0091b3;
-  --accent-dim:    #006e88;
+  --bg-primary:    #d8e8f8;
+  --bg-card:       #eaf3ff;
+  --bg-input:      #dbeaf8;
+  --bg-navbar:     #0f2a50;
+  --accent:        #0066cc;
+  --accent-dim:    #004fa8;
   --purple:        #5b54e6;
-  --danger:        #d13b3b;
-  --success:       #0a9e6a;
-  --warning:       #c97a17;
-  --text-primary:  #1a1f2e;
-  --text-muted:    #5b6577;
-  --border:        #d8dEe8;
-  --shadow:        0 4px 24px rgba(20, 30, 60, 0.10);
-  --table-head:    #eef1f7;
+  --danger:        #c42b2b;
+  --success:       #0a8c5e;
+  --warning:       #b8680e;
+  --text-primary:  #0c1a30;
+  --text-muted:    #3e5575;
+  --border:        #aec8e4;
+  --shadow:        0 4px 24px rgba(8, 24, 60, 0.18);
+  --table-head:    #d8eaf8;
+  --navbar-text:        #f0f6ff;
+  --navbar-text-muted:  rgba(220, 240, 255, 0.65);
+}
+
+/* ── Global entry animations (referenced by module CSS files) ───────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; }
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

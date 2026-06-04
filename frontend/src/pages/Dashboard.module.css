@@ -47,7 +47,11 @@
 .kpiCard {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
   padding: 20px; text-align: center;
+  animation: fadeSlideUp 0.45s ease-out both;
 }
+.kpiCard:nth-child(2) { animation-delay: 0.07s; }
+.kpiCard:nth-child(3) { animation-delay: 0.14s; }
+.kpiCard:nth-child(4) { animation-delay: 0.21s; }
 .kpiValue { font-size: 34px; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; }
 .kpiLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
 
@@ -55,18 +59,32 @@
 
 .modelGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
 .modelCard {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
-  transition: border-color 0.2s, transform 0.2s;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--card-accent, var(--accent));
+  border-radius: 12px; padding: 18px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  animation: scaleIn 0.4s ease-out both;
 }
-.modelCard:hover { border-color: var(--accent); transform: translateY(-2px); }
+.modelCard:nth-child(2) { animation-delay: 0.08s; }
+.modelCard:nth-child(3) { animation-delay: 0.16s; }
+.modelCard:nth-child(4) { animation-delay: 0.24s; }
+.modelCard:hover {
+  border-left-color: var(--card-accent, var(--accent));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transform: translateY(-3px);
+}
 .modelHead { display: flex; align-items: baseline; justify-content: space-between; }
 .modelName { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-.modelAcc { font-size: 16px; font-weight: 700; color: var(--accent); }
-.modelType { font-size: 12px; color: var(--purple); margin-top: 2px; font-weight: 600; }
+.modelAcc { font-size: 16px; font-weight: 700; color: var(--card-accent, var(--accent)); }
+.modelType { font-size: 12px; color: var(--card-accent, var(--purple)); margin-top: 2px; font-weight: 600; }
 .modelDesc { font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
 
 .chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  animation: fadeIn 0.5s ease-out both;
+}
 .exportRow { margin-top: 16px; display: flex; justify-content: flex-end; }
 
 @keyframes heroIn {

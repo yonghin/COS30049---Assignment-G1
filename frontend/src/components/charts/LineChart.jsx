@@ -13,6 +13,7 @@ function LineChart({
   tpr,
   auc,
   title,
+  color,
 }) {
   const divRef = useRef(null)
   const { theme } = useTheme()
@@ -33,7 +34,7 @@ function LineChart({
           y: tpr,
           mode: 'lines',
           name: 'ROC',
-          line: { color: COLORS.accent, width: 2 },
+          line: { color: color ?? COLORS.accent, width: 2.5 },
         },
         {
           x: [0, 1],
@@ -45,6 +46,7 @@ function LineChart({
       ]
       layout = {
         ...base,
+        uirevision: 'roc',
         title: {
           text: title ?? `ROC Curve (AUC = ${auc != null ? auc.toFixed(4) : 'N/A'})`,
           font: { color: base.font.color, size: 14 },
@@ -80,18 +82,22 @@ function LineChart({
       ]
       layout = {
         ...base,
+        uirevision: 'timeseries',
         title: { text: title ?? 'Live Predictions', font: { color: base.font.color, size: 14 } },
         xaxis: { ...base.xaxis, title: 'Time', type: 'date' },
         yaxis: { ...base.yaxis, title: 'Count' },
       }
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
+    // Plotly.react updates data without resetting user zoom/pan (uirevision keeps UI state stable).
+    Plotly.react(divRef.current, traces, layout, getChartConfig(Plotly))
+  }, [spamSeries, malwareSeries, fpr, tpr, auc, title, color, theme])
 
-    return () => {
-      if (divRef.current) Plotly.purge(divRef.current)
-    }
-  }, [spamSeries, malwareSeries, fpr, tpr, auc, title, theme])
+  // Purge only on unmount — not between data updates — so user zoom is preserved.
+  useEffect(() => {
+    const div = divRef.current
+    return () => { if (div) Plotly.purge(div) }
+  }, [])
 
   return <div ref={divRef} style={{ width: '100%', minHeight: '400px' }} />
 }

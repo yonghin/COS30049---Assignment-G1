@@ -18,7 +18,7 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         z: matrix,
         x: labels,
         y: labels,
-        colorscale: [[0, base.plot_bgcolor], [0.5, '#0099bb'], [1, '#00d4ff']],
+        colorscale: [[0, base.plot_bgcolor], [0.35, '#4a3aaa'], [0.65, '#0077b6'], [1, '#00cc88']],
         showscale: false,
         text: matrix.map((row) => row.map((v) => String(v))),
         texttemplate: '%{text}',

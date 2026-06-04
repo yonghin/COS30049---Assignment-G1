@@ -34,10 +34,10 @@ function metricsFromConfusion(cm, auc) {
 }
 
 const TABS = [
-  { key: 'rf_spam', label: 'RF Spam', cmLabels: ['Ham', 'Spam'] },
-  { key: 'nb_spam', label: 'Naive Bayes', cmLabels: ['Ham', 'Spam'] },
-  { key: 'logistic_regression_spam', label: 'Logistic Regression', cmLabels: ['Ham', 'Spam'] },
-  { key: 'svm_malware', label: 'SVM Malware', cmLabels: ['Benign', 'Malware'] },
+  { key: 'rf_spam',                  label: 'RF Spam',            cmLabels: ['Ham', 'Spam'],       color: '#00d4ff' },
+  { key: 'nb_spam',                  label: 'Naive Bayes',        cmLabels: ['Ham', 'Spam'],       color: '#00cc88' },
+  { key: 'logistic_regression_spam', label: 'Logistic Regression',cmLabels: ['Ham', 'Spam'],       color: '#ffb347' },
+  { key: 'svm_malware',              label: 'SVM Malware',        cmLabels: ['Benign', 'Malware'], color: '#ff4d4d' },
 ]
 
 function ModelAnalytics() {
@@ -111,7 +111,7 @@ function ModelAnalytics() {
                 <Heatmap matrix={data.confusion_matrix} labels={tab.cmLabels} title="Confusion Matrix" />
               </div>
               <div className={styles.card}>
-                <LineChart fpr={data.roc.fpr} tpr={data.roc.tpr} auc={data.roc.auc} />
+                <LineChart fpr={data.roc.fpr} tpr={data.roc.tpr} auc={data.roc.auc} color={tab.color} />
               </div>
             </div>
 
@@ -119,7 +119,7 @@ function ModelAnalytics() {
               <div className={styles.card}>
                 <RadarChart
                   metrics={metrics.metrics}
-                  series={[{ name: tab.label, values: metrics.values }]}
+                  series={[{ name: tab.label, values: metrics.values, color: tab.color }]}
                   title={`${tab.label} — metric profile`}
                 />
               </div>

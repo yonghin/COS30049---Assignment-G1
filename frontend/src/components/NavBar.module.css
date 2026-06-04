@@ -35,19 +35,29 @@
 .link {
   display: flex;
   align-items: center;
-  color: var(--text-muted);
+  color: var(--navbar-text-muted);
   font-size: 14px;
   padding: 0 14px;
   border-bottom: 2px solid transparent;
+  transition: color 0.2s;
 }
 
 .link:hover {
-  color: var(--text-primary);
+  color: var(--navbar-text);
 }
 
 .active {
   color: var(--accent);
   border-bottom: 2px solid var(--accent);
+}
+
+/* In light mode the navbar is dark navy — force bright accent so active link stays visible. */
+:global([data-theme='light']) .active {
+  color: #00d4ff;
+  border-bottom-color: #00d4ff;
+}
+:global([data-theme='light']) .logo {
+  color: #00d4ff;
 }
 
 .right {

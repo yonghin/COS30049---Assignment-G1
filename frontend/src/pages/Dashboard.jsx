@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
@@ -21,14 +21,18 @@ const FEATURES = [
 
 // Plain-language description of each model (no About page, so it lives here).
 const MODEL_INFO = {
-  rf_spam: { category: 'Spam classifier', detects: 'Spam via engineered text features' },
-  nb_spam: { category: 'Spam classifier', detects: 'Spam via TF-IDF token probabilities' },
-  lr_spam: { category: 'Spam classifier', detects: 'Spam via TF-IDF linear weights' },
-  logistic_regression_spam: { category: 'Spam classifier', detects: 'Spam via TF-IDF linear weights' },
-  svm_malware: { category: 'Malware classifier', detects: 'Malware vs benign memory samples' },
-  kmeans_malware: { category: 'Malware clustering', detects: 'Clusters malware samples' },
-  dbscan_malware: { category: 'Anomaly detection', detects: 'Flags anomalous outlier samples' },
+  rf_spam:                  { category: 'Spam classifier',   detects: 'Spam via engineered text features',       color: '#00d4ff' },
+  nb_spam:                  { category: 'Spam classifier',   detects: 'Spam via TF-IDF token probabilities',     color: '#00cc88' },
+  lr_spam:                  { category: 'Spam classifier',   detects: 'Spam via TF-IDF linear weights',          color: '#ffb347' },
+  logistic_regression_spam: { category: 'Spam classifier',   detects: 'Spam via TF-IDF linear weights',          color: '#ffb347' },
+  svm_malware:              { category: 'Malware classifier', detects: 'Malware vs benign memory samples',        color: '#ff4d4d' },
+  kmeans_malware:           { category: 'Malware clustering', detects: 'Clusters malware samples',               color: '#6c63ff' },
+  dbscan_malware:           { category: 'Anomaly detection',  detects: 'Flags anomalous outlier samples',        color: '#ffb347' },
 }
+
+const RADAR_METRICS = ['Accuracy', 'Precision', 'Recall', 'F1', 'AUC']
+const DONUT_LABELS = ['Spam', 'Malware']
+const DONUT_COLORS = ['#00d4ff', '#ff4d4d']
 
 // Single animated counter — separate component so each can own a useCountUp hook.
 function KpiCounter({ label, value, accent }) {
@@ -99,9 +103,27 @@ function Dashboard() {
     .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
     .slice(0, 10)
 
-  // Radar/comparison only for models that expose the core metrics.
-  const radarModels = models.filter((m) => m.accuracy != null && m.f1 != null && m.auc != null)
-  const radarMetric = (m, key) => (m[key] != null ? m[key] : m.accuracy)
+  // Memoized chart props — prevent charts from re-rendering on every 5-second poll tick.
+  const radarSeries = useMemo(
+    () => models
+      .filter((m) => m.accuracy != null && m.f1 != null && m.auc != null)
+      .map((m) => ({
+        name: modelLabel(m.name),
+        values: [
+          m.accuracy,
+          m.precision != null ? m.precision : m.accuracy,
+          m.recall != null ? m.recall : m.accuracy,
+          m.f1,
+          m.auc,
+        ],
+      })),
+    [models]
+  )
+  const barLabels   = useMemo(() => models.map((m) => modelLabel(m.name)), [models])
+  const barAccuracy = useMemo(() => models.map((m) => m.accuracy), [models])
+  const barF1       = useMemo(() => models.map((m) => m.f1), [models])
+  const barAuc      = useMemo(() => models.map((m) => m.auc), [models])
+  const donutValues = useMemo(() => [sumSpam, sumMalware], [sumSpam, sumMalware])
 
   return (
     <div className={styles.page}>
@@ -140,8 +162,9 @@ function Dashboard() {
         <div className={styles.modelGrid}>
           {models.map((m) => {
             const info = MODEL_INFO[m.name] ?? { category: m.task, detects: m.task }
+            const cardColor = info.color ?? 'var(--accent)'
             return (
-              <div key={m.name} className={styles.modelCard}>
+              <div key={m.name} className={styles.modelCard} style={{ '--card-accent': cardColor }}>
                 <div className={styles.modelHead}>
                   <span className={styles.modelName}>{modelLabel(m.name)}</span>
                   <span className={styles.modelAcc}>{(m.accuracy * 100).toFixed(1)}%</span>
@@ -156,26 +179,17 @@ function Dashboard() {
         <div className={styles.chartsRow}>
           <div className={styles.card}>
             <RadarChart
-              metrics={['Accuracy', 'Precision', 'Recall', 'F1', 'AUC']}
-              series={radarModels.map((m) => ({
-                name: modelLabel(m.name),
-                values: [
-                  m.accuracy,
-                  radarMetric(m, 'precision'),
-                  radarMetric(m, 'recall'),
-                  m.f1,
-                  m.auc,
-                ],
-              }))}
+              metrics={RADAR_METRICS}
+              series={radarSeries}
               title="Model Comparison"
               rangeMin={0.95}
             />
           </div>
           <div className={styles.card}>
             <DonutChart
-              labels={['Spam', 'Malware']}
-              values={[sumSpam, sumMalware]}
-              colors={['#00d4ff', '#ff4d4d']}
+              labels={DONUT_LABELS}
+              values={donutValues}
+              colors={DONUT_COLORS}
               title="Predictions by Type"
             />
           </div>
@@ -184,10 +198,10 @@ function Dashboard() {
         <div className={styles.chartsRow}>
           <div className={styles.card}>
             <BarChart
-              models={models.map((m) => modelLabel(m.name))}
-              accuracy={models.map((m) => m.accuracy)}
-              f1={models.map((m) => m.f1)}
-              auc={models.map((m) => m.auc)}
+              models={barLabels}
+              accuracy={barAccuracy}
+              f1={barF1}
+              auc={barAuc}
               title="Model Performance"
             />
           </div>
