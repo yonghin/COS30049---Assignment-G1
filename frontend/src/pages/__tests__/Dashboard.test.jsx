@@ -24,8 +24,8 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 describe('Dashboard', () => {
-  it('renders model card after fetch', async () => {
+  it('renders model card with display name after fetch', async () => {
     render(<MemoryRouter><Dashboard /></MemoryRouter>)
-    await waitFor(() => expect(screen.getByText(/rf_spam/i)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Random Forest/i)).toBeInTheDocument())
   })
 })

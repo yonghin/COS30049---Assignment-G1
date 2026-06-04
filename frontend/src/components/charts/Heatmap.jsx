@@ -28,8 +28,8 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
       ...DARK_LAYOUT,
       height: 360,
       title: { text: title, font: { color: '#e8eaf0', size: 14 } },
-      xaxis: { ...DARK_LAYOUT.xaxis, title: 'Predicted' },
-      yaxis: { ...DARK_LAYOUT.yaxis, title: 'Actual', autorange: 'reversed' },
+      xaxis: { ...DARK_LAYOUT.xaxis, title: 'Predicted', type: 'category' },
+      yaxis: { ...DARK_LAYOUT.yaxis, title: 'Actual', type: 'category', autorange: 'reversed' },
     }
 
     Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)

@@ -48,6 +48,7 @@ function BarChart({
         ...DARK_LAYOUT,
         title: { text: title, font: { color: '#e8eaf0', size: 14 } },
         barmode: 'group',
+        xaxis: { ...DARK_LAYOUT.xaxis, type: 'category' },
         yaxis: { ...DARK_LAYOUT.yaxis, range: [0, 1.05] },
       }
     }

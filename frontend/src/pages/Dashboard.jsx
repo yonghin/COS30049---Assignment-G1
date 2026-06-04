@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import NavBar from '../components/NavBar'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
@@ -7,7 +8,14 @@ import ExportButton from '../components/ExportButton'
 import BarChart from '../components/charts/BarChart'
 import LineChart from '../components/charts/LineChart'
 import { getModels, getHistory } from '../api/historyApi'
+import { modelLabel } from '../constants/modelNames'
 import styles from './Dashboard.module.css'
+
+const FEATURES = [
+  { to: '/spam', icon: '🛡️', title: 'Spam Detector', desc: 'Classify messages as spam or ham with three trained models.' },
+  { to: '/malware', icon: '🐞', title: 'Malware Detector', desc: 'Score CSV feature sets and surface anomalous samples.' },
+  { to: '/analytics', icon: '📊', title: 'Model Analytics', desc: 'Inspect confusion matrices, ROC curves and feature importance.' },
+]
 
 function Dashboard() {
   const [models, setModels] = useState([])
@@ -66,12 +74,30 @@ function Dashboard() {
       <div className={styles.page}>
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
+        <section className={styles.hero}>
+          <h1 className={styles.heroTitle}>NTCyber AI</h1>
+          <p className={styles.heroTagline}>Protect. Detect. Analyze.</p>
+          <p className={styles.heroBlurb}>
+            A machine-learning platform for spam classification, malware screening and model analytics — all in one place.
+          </p>
+        </section>
+
+        <div className={styles.featureGrid}>
+          {FEATURES.map((f) => (
+            <Link key={f.to} to={f.to} className={styles.featureCard}>
+              <span className={styles.featureIcon} aria-hidden="true">{f.icon}</span>
+              <span className={styles.featureTitle}>{f.title}</span>
+              <span className={styles.featureDesc}>{f.desc}</span>
+            </Link>
+          ))}
+        </div>
+
         <ProgressIndicator visible={loading} label="Loading models..." />
 
         <div className={styles.statsGrid}>
           {models.map((m) => (
             <div key={m.name} className={styles.card}>
-              <div className={styles.statLabel}>{m.name}</div>
+              <div className={styles.statLabel}>{modelLabel(m.name)}</div>
               <div className={styles.statValue}>{(m.accuracy * 100).toFixed(2)}%</div>
               <div className={styles.statLabel}>F1 {(m.f1 * 100).toFixed(2)}% · {m.task}</div>
             </div>
@@ -81,7 +107,7 @@ function Dashboard() {
         <div className={styles.chartsRow}>
           <div className={styles.card}>
             <BarChart
-              models={models.map((m) => m.name)}
+              models={models.map((m) => modelLabel(m.name))}
               accuracy={models.map((m) => m.accuracy)}
               f1={models.map((m) => m.f1)}
               auc={models.map((m) => m.auc)}

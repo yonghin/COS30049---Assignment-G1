@@ -28,7 +28,7 @@ describe('SpamDetector', () => {
   it('shows SPAM result after prediction', async () => {
     render(<MemoryRouter><SpamDetector /></MemoryRouter>)
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Win a free prize now!' } })
-    fireEvent.click(screen.getByRole('button', { name: /analyze/i }))
-    await waitFor(() => expect(screen.getByText(/SPAM/i)).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }))
+    await waitFor(() => expect(screen.getByText('SPAM')).toBeInTheDocument())
   })
 })
