@@ -24,6 +24,30 @@
 }
 .clear:hover { background: rgba(255, 77, 77, 0.1); }
 
+.undoBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 179, 71, 0.12);
+  border: 1px solid var(--warning);
+  border-radius: 10px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+}
+.undoMsg { font-size: 13px; color: var(--warning); }
+.undoBtn {
+  background: var(--warning);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.undoBtn:hover { opacity: 0.85; }
+
 .emptyState {
   background: var(--bg-card);
   border: 1px dashed var(--border);

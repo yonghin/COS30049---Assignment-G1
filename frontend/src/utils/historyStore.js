@@ -46,6 +46,10 @@ export function clearHistory() {
   write([])
 }
 
+export function restoreHistory(items) {
+  write(Array.isArray(items) ? items : [])
+}
+
 // Subscribe to changes; returns an unsubscribe function.
 export function subscribe(cb) {
   listeners.add(cb)
