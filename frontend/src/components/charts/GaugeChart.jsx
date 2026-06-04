@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
 // Spam probability gauge. spamProb === null renders an empty gauge at 0.
@@ -35,7 +35,7 @@ function GaugeChart({ spamProb = null, label }) {
     ]
     const layout = { ...base, height: 300, margin: { l: 30, r: 30, t: 30, b: 30 } }
 
-    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
 
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)

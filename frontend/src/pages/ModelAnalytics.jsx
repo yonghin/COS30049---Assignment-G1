@@ -9,6 +9,13 @@ import RadarChart from '../components/charts/RadarChart'
 import { getModelAnalytics } from '../api/analyticsApi'
 import styles from './ModelAnalytics.module.css'
 
+const METRIC_COLORS = {
+  accuracy: 'var(--accent)',
+  precision: 'var(--purple)',
+  recall: 'var(--success)',
+  f1: 'var(--warning)',
+}
+
 // Derive headline metrics from a confusion matrix [[TN, FP], [FN, TP]].
 function metricsFromConfusion(cm, auc) {
   if (!Array.isArray(cm) || cm.length < 2) return null
@@ -93,7 +100,7 @@ function ModelAnalytics() {
                 {Object.entries(metrics.cards).map(([k, v]) => (
                   <div key={k} className={styles.metricCard}>
                     <div className={styles.metricLabel}>{k}</div>
-                    <div className={styles.metricValue}>{(v * 100).toFixed(1)}%</div>
+                    <div className={styles.metricValue} style={{ color: METRIC_COLORS[k] }}>{(v * 100).toFixed(1)}%</div>
                   </div>
                 ))}
               </div>

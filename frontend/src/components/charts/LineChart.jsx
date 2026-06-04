@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
 // Dual-purpose line chart:
@@ -55,10 +55,13 @@ function LineChart({
     } else {
       const spam = spamSeries ?? []
       const malware = malwareSeries ?? []
-      // Plotly's date parser rejects an ISO timezone offset ("...+00:00" / "...Z"),
-      // so normalize to "YYYY-MM-DD HH:MM:SS" — otherwise the points never plot and
-      // the x-axis collapses to a meaningless 0–0.5 range.
-      const toPlotlyDate = (s) => (s ?? '').replace('T', ' ').split(/[+Z]/)[0]
+      // Convert UTC timestamp → Malaysia time (UTC+8), then format as "YYYY-MM-DD HH:MM:SS"
+      // for Plotly (which rejects ISO timezone offsets and treats bare strings as local time).
+      const toPlotlyDate = (s) => {
+        if (!s) return ''
+        const myt = new Date(new Date(s).getTime() + 8 * 60 * 60 * 1000)
+        return myt.toISOString().replace('T', ' ').split('.')[0]
+      }
       traces = [
         {
           x: spam.map((p) => toPlotlyDate(p.timestamp)),
@@ -83,7 +86,7 @@ function LineChart({
       }
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
 
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)

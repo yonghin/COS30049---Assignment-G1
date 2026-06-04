@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
 // Donut (pie with a hole) for class proportions.
@@ -36,7 +36,7 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
       showlegend: true,
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
 
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)

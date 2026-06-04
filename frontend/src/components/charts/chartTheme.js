@@ -44,10 +44,36 @@ export const COLORS = {
 // Back-compat export (static dark layout) for any caller not yet migrated.
 export const DARK_LAYOUT = getChartLayout()
 
+// Download icon: arrow-down + underline (24×24 Material Design path)
+const downloadIcon = {
+  width: 24,
+  height: 24,
+  path: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
+}
+
+// CHART_CONFIG is consumed by every chart component via Plotly.newPlot(div, traces, layout, config).
+// - toImage (camera) is removed and replaced with a custom download button placed last.
+export function getChartConfig(plotlyInstance) {
+  return {
+    responsive: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['sendDataToCloud', 'select2d', 'lasso2d', 'toImage'],
+    modeBarButtonsToAdd: [
+      {
+        name: 'Download plot as PNG',
+        title: 'Download plot as PNG',
+        icon: downloadIcon,
+        click: (gd) => plotlyInstance.downloadImage(gd, { format: 'png', scale: 2 }),
+      },
+    ],
+  }
+}
+
+// Keep the old static export so any caller that hasn't migrated still compiles.
 export const CHART_CONFIG = {
   responsive: true,
   displayModeBar: true,
   displaylogo: false,
-  toImageButtonOptions: { format: 'png', scale: 2 },
   modeBarButtonsToRemove: ['sendDataToCloud', 'select2d', 'lasso2d'],
 }

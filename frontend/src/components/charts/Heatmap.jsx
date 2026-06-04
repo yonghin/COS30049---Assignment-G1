@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, getChartConfig } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
 // Confusion matrix heatmap. matrix = [[TN, FP], [FN, TP]], labels e.g. ['Ham','Spam'].
@@ -35,7 +35,7 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
       yaxis: { ...base.yaxis, title: 'Actual', type: 'category', autorange: 'reversed' },
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
 
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)

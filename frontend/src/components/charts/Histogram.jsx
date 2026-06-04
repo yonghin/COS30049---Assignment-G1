@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
 // Distribution histogram for a single numeric series (e.g. prediction confidence).
@@ -35,7 +35,7 @@ function Histogram({
       yaxis: { ...base.yaxis, title: 'Count' },
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
 
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)

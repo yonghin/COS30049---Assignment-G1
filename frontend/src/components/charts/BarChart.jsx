@@ -1,7 +1,9 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
+
+const H_PALETTE = [COLORS.accent, COLORS.purple, COLORS.success, COLORS.warning, COLORS.danger]
 
 // Grouped bar chart for model metric comparison (accuracy / f1 / auc),
 // or a single horizontal bar trace when `horizontal` + `values`/`categories` are given.
@@ -32,7 +34,7 @@ function BarChart({
           y: categories ?? [],
           type: 'bar',
           orientation: 'h',
-          marker: { color: COLORS.accent },
+          marker: { color: (values ?? []).map((_, i) => H_PALETTE[i % H_PALETTE.length]) },
         },
       ]
       layout = {
@@ -56,7 +58,7 @@ function BarChart({
       }
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
+    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
 
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)

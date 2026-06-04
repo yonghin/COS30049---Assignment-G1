@@ -90,9 +90,11 @@ function Dashboard() {
   const sumSpam = spamSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
   const sumMalware = malwareSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
 
+  const fmtMYT = (ts) => new Date(ts).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })
+
   const activityRows = [
-    ...spamSeries.map((p) => ({ timestamp: p.timestamp, task: 'spam', count: p.count })),
-    ...malwareSeries.map((p) => ({ timestamp: p.timestamp, task: 'malware', count: p.count })),
+    ...spamSeries.map((p) => ({ timestamp: fmtMYT(p.timestamp), task: 'spam', count: p.count })),
+    ...malwareSeries.map((p) => ({ timestamp: fmtMYT(p.timestamp), task: 'malware', count: p.count })),
   ]
     .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
     .slice(0, 10)
@@ -126,7 +128,7 @@ function Dashboard() {
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
         <div className={styles.kpiGrid}>
-          <KpiCounter label="Total predictions" value={sumSpam + sumMalware} />
+          <KpiCounter label="Total predictions" value={sumSpam + sumMalware} accent="var(--purple)" />
           <KpiCounter label="Spam predictions" value={sumSpam} accent="var(--accent)" />
           <KpiCounter label="Malware predictions" value={sumMalware} accent="var(--danger)" />
           <KpiCounter label="Models loaded" value={models.length} accent="var(--success)" />

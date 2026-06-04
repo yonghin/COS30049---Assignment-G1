@@ -97,7 +97,7 @@ function History() {
           <div className={styles.kpiGrid}>
             <div className={styles.kpiCard}>
               <div className={styles.kpiLabel}>Total</div>
-              <div className={styles.kpiValue}>{items.length}</div>
+              <div className={`${styles.kpiValue} ${styles.total}`}>{items.length}</div>
             </div>
             <div className={styles.kpiCard}>
               <div className={styles.kpiLabel}>Spam runs</div>
