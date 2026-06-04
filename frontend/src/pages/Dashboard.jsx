@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import NavBar from '../components/NavBar'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
 import ResultsTable from '../components/ResultsTable'
 import ExportButton from '../components/ExportButton'
 import BarChart from '../components/charts/BarChart'
 import LineChart from '../components/charts/LineChart'
+import RadarChart from '../components/charts/RadarChart'
+import DonutChart from '../components/charts/DonutChart'
 import { getModels, getHistory } from '../api/historyApi'
 import { modelLabel } from '../constants/modelNames'
+import { useCountUp } from '../hooks/useCountUp'
 import styles from './Dashboard.module.css'
 
 const FEATURES = [
@@ -16,6 +18,30 @@ const FEATURES = [
   { to: '/malware', icon: '🐞', title: 'Malware Detector', desc: 'Score CSV feature sets and surface anomalous samples.' },
   { to: '/analytics', icon: '📊', title: 'Model Analytics', desc: 'Inspect confusion matrices, ROC curves and feature importance.' },
 ]
+
+// Plain-language description of each model (no About page, so it lives here).
+const MODEL_INFO = {
+  rf_spam: { category: 'Spam classifier', detects: 'Spam via engineered text features' },
+  nb_spam: { category: 'Spam classifier', detects: 'Spam via TF-IDF token probabilities' },
+  lr_spam: { category: 'Spam classifier', detects: 'Spam via TF-IDF linear weights' },
+  logistic_regression_spam: { category: 'Spam classifier', detects: 'Spam via TF-IDF linear weights' },
+  svm_malware: { category: 'Malware classifier', detects: 'Malware vs benign memory samples' },
+  kmeans_malware: { category: 'Malware clustering', detects: 'Clusters malware samples' },
+  dbscan_malware: { category: 'Anomaly detection', detects: 'Flags anomalous outlier samples' },
+}
+
+// Single animated counter — separate component so each can own a useCountUp hook.
+function KpiCounter({ label, value, accent }) {
+  const display = useCountUp(value)
+  return (
+    <div className={styles.kpiCard}>
+      <div className={styles.kpiValue} style={accent ? { color: accent } : undefined}>
+        {display.toLocaleString()}
+      </div>
+      <div className={styles.kpiLabel}>{label}</div>
+    </div>
+  )
+}
 
 function Dashboard() {
   const [models, setModels] = useState([])
@@ -61,6 +87,9 @@ function Dashboard() {
     }
   }, [])
 
+  const sumSpam = spamSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
+  const sumMalware = malwareSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
+
   const activityRows = [
     ...spamSeries.map((p) => ({ timestamp: p.timestamp, task: 'spam', count: p.count })),
     ...malwareSeries.map((p) => ({ timestamp: p.timestamp, task: 'malware', count: p.count })),
@@ -68,40 +97,86 @@ function Dashboard() {
     .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
     .slice(0, 10)
 
-  return (
-    <>
-      <NavBar />
-      <div className={styles.page}>
-        <ErrorBanner message={error} onDismiss={() => setError(null)} />
+  // Radar/comparison only for models that expose the core metrics.
+  const radarModels = models.filter((m) => m.accuracy != null && m.f1 != null && m.auc != null)
+  const radarMetric = (m, key) => (m[key] != null ? m[key] : m.accuracy)
 
-        <section className={styles.hero}>
+  return (
+    <div className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
           <h1 className={styles.heroTitle}>NTCyber AI</h1>
           <p className={styles.heroTagline}>Protect. Detect. Analyze.</p>
           <p className={styles.heroBlurb}>
-            A machine-learning platform for spam classification, malware screening and model analytics — all in one place.
+            A machine-learning platform for spam classification, malware screening and model
+            analytics — all in one place.
           </p>
-        </section>
+          <div className={styles.heroActions}>
+            {FEATURES.map((f) => (
+              <Link key={f.to} to={f.to} className={styles.heroBtn}>
+                <span aria-hidden="true">{f.icon}</span> {f.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <span className={styles.scrollCue} aria-hidden="true">⌄</span>
+      </section>
 
-        <div className={styles.featureGrid}>
-          {FEATURES.map((f) => (
-            <Link key={f.to} to={f.to} className={styles.featureCard}>
-              <span className={styles.featureIcon} aria-hidden="true">{f.icon}</span>
-              <span className={styles.featureTitle}>{f.title}</span>
-              <span className={styles.featureDesc}>{f.desc}</span>
-            </Link>
-          ))}
+      <div className={styles.body}>
+        <ErrorBanner message={error} onDismiss={() => setError(null)} />
+
+        <div className={styles.kpiGrid}>
+          <KpiCounter label="Total predictions" value={sumSpam + sumMalware} />
+          <KpiCounter label="Spam predictions" value={sumSpam} accent="var(--accent)" />
+          <KpiCounter label="Malware predictions" value={sumMalware} accent="var(--danger)" />
+          <KpiCounter label="Models loaded" value={models.length} accent="var(--success)" />
         </div>
 
         <ProgressIndicator visible={loading} label="Loading models..." />
 
-        <div className={styles.statsGrid}>
-          {models.map((m) => (
-            <div key={m.name} className={styles.card}>
-              <div className={styles.statLabel}>{modelLabel(m.name)}</div>
-              <div className={styles.statValue}>{(m.accuracy * 100).toFixed(2)}%</div>
-              <div className={styles.statLabel}>F1 {(m.f1 * 100).toFixed(2)}% · {m.task}</div>
-            </div>
-          ))}
+        <h3 className={styles.sectionTitle}>Models</h3>
+        <div className={styles.modelGrid}>
+          {models.map((m) => {
+            const info = MODEL_INFO[m.name] ?? { category: m.task, detects: m.task }
+            return (
+              <div key={m.name} className={styles.modelCard}>
+                <div className={styles.modelHead}>
+                  <span className={styles.modelName}>{modelLabel(m.name)}</span>
+                  <span className={styles.modelAcc}>{(m.accuracy * 100).toFixed(1)}%</span>
+                </div>
+                <div className={styles.modelType}>{info.category}</div>
+                <div className={styles.modelDesc}>{info.detects}</div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className={styles.chartsRow}>
+          <div className={styles.card}>
+            <RadarChart
+              metrics={['Accuracy', 'Precision', 'Recall', 'F1', 'AUC']}
+              series={radarModels.map((m) => ({
+                name: modelLabel(m.name),
+                values: [
+                  m.accuracy,
+                  radarMetric(m, 'precision'),
+                  radarMetric(m, 'recall'),
+                  m.f1,
+                  m.auc,
+                ],
+              }))}
+              title="Model Comparison"
+              rangeMin={0.95}
+            />
+          </div>
+          <div className={styles.card}>
+            <DonutChart
+              labels={['Spam', 'Malware']}
+              values={[sumSpam, sumMalware]}
+              colors={['#00d4ff', '#ff4d4d']}
+              title="Predictions by Type"
+            />
+          </div>
         </div>
 
         <div className={styles.chartsRow}>
@@ -124,13 +199,14 @@ function Dashboard() {
           <ResultsTable
             columns={['timestamp', 'task', 'count']}
             rows={activityRows}
+            filterColumn="task"
           />
           <div className={styles.exportRow}>
             <ExportButton data={activityRows} filename="recent_activity.csv" />
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

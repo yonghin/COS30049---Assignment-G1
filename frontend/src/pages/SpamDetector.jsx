@@ -1,14 +1,18 @@
 import { useState } from 'react'
-import NavBar from '../components/NavBar'
+import PageHeader from '../components/PageHeader'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
 import ResultsTable from '../components/ResultsTable'
 import ExportButton from '../components/ExportButton'
 import FileUploadWidget from '../components/FileUploadWidget'
 import GaugeChart from '../components/charts/GaugeChart'
+import Histogram from '../components/charts/Histogram'
+import DonutChart from '../components/charts/DonutChart'
 import KeywordHighlight from '../components/KeywordHighlight'
 import { predictSingle, predictBatch } from '../api/spamApi'
 import { modelLabel } from '../constants/modelNames'
+import { useToast } from '../context/ToastContext'
+import { recordPrediction } from '../utils/historyStore'
 import styles from './SpamDetector.module.css'
 
 const MODELS = [
@@ -39,6 +43,7 @@ const BATCH_SAMPLES = {
 }
 
 function SpamDetector() {
+  const toast = useToast()
   const [tab, setTab] = useState('single')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -69,8 +74,17 @@ function SpamDetector() {
       const data = await predictSingle(text, model)
       setResult(data)
       setAnalyzed(text)
+      recordPrediction({
+        kind: 'spam',
+        model: data.model_used,
+        label: data.label,
+        confidence: data.confidence,
+        summary: text.slice(0, 80),
+      })
+      toast.success(`Classified as ${data.label} (${(data.confidence * 100).toFixed(1)}%)`)
     } catch (e) {
       setError(e.message)
+      toast.error(e.message)
     } finally {
       setLoading(false)
     }
@@ -122,20 +136,31 @@ function SpamDetector() {
     try {
       const data = await predictBatch(file, batchModel)
       setBatch(data)
+      recordPrediction({
+        kind: 'spam',
+        model: batchModel,
+        label: `Batch (${data.spam_count}/${data.total} spam)`,
+        confidence: data.total ? data.spam_count / data.total : 0,
+        summary: `Batch of ${data.total} messages`,
+      })
+      toast.success(`Analyzed ${data.total} messages · ${data.spam_count} spam`)
     } catch (e) {
       setError(e.message)
+      toast.error(e.message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <>
-      <NavBar />
-      <div className={styles.page}>
-        <ErrorBanner message={error} onDismiss={() => setError(null)} />
+    <div className={styles.page}>
+      <PageHeader
+        title="Spam Detector"
+        subtitle="Classify a single message or a batch file as spam or ham using three trained models."
+      />
+      <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
-        <div className={styles.tabs}>
+      <div className={styles.tabs}>
           <button
             className={tab === 'single' ? `${styles.tab} ${styles.activeTab}` : styles.tab}
             onClick={() => setTab('single')}
@@ -275,9 +300,26 @@ function SpamDetector() {
                     <div className={`${styles.statValue} ${styles.hamText}`}>{batch.ham_count}</div>
                   </div>
                 </div>
+                <div className={styles.chartsRow}>
+                  <div className={styles.chartCard}>
+                    <DonutChart
+                      labels={['Ham', 'Spam']}
+                      values={[batch.ham_count, batch.spam_count]}
+                      title="Ham vs Spam"
+                    />
+                  </div>
+                  <div className={styles.chartCard}>
+                    <Histogram
+                      values={batch.results.map((r) => r.spam_prob)}
+                      title="Spam Probability Distribution"
+                      xLabel="Spam probability"
+                    />
+                  </div>
+                </div>
                 <ResultsTable
                   columns={['row', 'text', 'label', 'spam_prob']}
                   rows={batch.results}
+                  filterColumn="label"
                 />
                 <div className={styles.exportRow}>
                   <ExportButton data={batch.results} filename="spam_batch_results.csv" />
@@ -287,7 +329,6 @@ function SpamDetector() {
           </div>
         )}
       </div>
-    </>
   )
 }
 

@@ -1,11 +1,13 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { DARK_LAYOUT, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, COLORS, CHART_CONFIG } from './chartTheme'
+import { useTheme } from '../../context/ThemeContext'
 
 // PCA 2D malware scatter. Accepts parallel arrays:
 //   pcaData: [[x, y], ...], labels: [], clusters: [], anomalies: [bool], rowIds: []
 function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [], rowIds = [], title = 'PCA Projection' }) {
   const divRef = useRef(null)
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (!divRef.current) return
@@ -30,7 +32,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         mode: 'markers',
         name: 'Benign',
         type: 'scatter',
-        marker: { color: '#00cc88', size: 8, opacity: 0.8 },
+        marker: { color: COLORS.success, size: 8, opacity: 0.8 },
         text: benignNormal.map((p) => `Row ${p.rowId} | Cluster ${p.cluster}`),
       },
       {
@@ -39,7 +41,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         mode: 'markers',
         name: 'Malware',
         type: 'scatter',
-        marker: { color: '#ff4d4d', size: 8, opacity: 0.8 },
+        marker: { color: COLORS.danger, size: 8, opacity: 0.8 },
         text: malwareNormal.map((p) => `Row ${p.rowId} | Cluster ${p.cluster}`),
       },
       {
@@ -48,16 +50,17 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         mode: 'markers',
         name: 'Anomaly',
         type: 'scatter',
-        marker: { color: '#ffb347', symbol: 'x', size: 12, line: { width: 2, color: '#ffb347' } },
+        marker: { color: COLORS.warning, symbol: 'x', size: 12, line: { width: 2, color: COLORS.warning } },
         text: anomalyPoints.map((p) => `Row ${p.rowId} | Cluster ${p.cluster}`),
       },
     ]
 
+    const base = getChartLayout()
     const layout = {
-      ...DARK_LAYOUT,
-      title: { text: title, font: { color: '#e8eaf0', size: 14 } },
-      xaxis: { ...DARK_LAYOUT.xaxis, title: 'PC1' },
-      yaxis: { ...DARK_LAYOUT.yaxis, title: 'PC2' },
+      ...base,
+      title: { text: title, font: { color: base.font.color, size: 14 } },
+      xaxis: { ...base.xaxis, title: 'PC1' },
+      yaxis: { ...base.yaxis, title: 'PC2' },
     }
 
     Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
@@ -65,7 +68,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)
     }
-  }, [pcaData, labels, clusters, anomalies, rowIds, title])
+  }, [pcaData, labels, clusters, anomalies, rowIds, title, theme])
 
   return <div ref={divRef} style={{ width: '100%', minHeight: '400px' }} />
 }

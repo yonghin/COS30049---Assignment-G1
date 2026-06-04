@@ -1,12 +1,30 @@
 import { useState, useEffect } from 'react'
-import NavBar from '../components/NavBar'
+import PageHeader from '../components/PageHeader'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
 import Heatmap from '../components/charts/Heatmap'
 import LineChart from '../components/charts/LineChart'
 import BarChart from '../components/charts/BarChart'
+import RadarChart from '../components/charts/RadarChart'
 import { getModelAnalytics } from '../api/analyticsApi'
 import styles from './ModelAnalytics.module.css'
+
+// Derive headline metrics from a confusion matrix [[TN, FP], [FN, TP]].
+function metricsFromConfusion(cm, auc) {
+  if (!Array.isArray(cm) || cm.length < 2) return null
+  const [[tn, fp], [fn, tp]] = cm
+  const total = tn + fp + fn + tp
+  const safe = (num, den) => (den > 0 ? num / den : 0)
+  const accuracy = safe(tn + tp, total)
+  const precision = safe(tp, tp + fp)
+  const recall = safe(tp, tp + fn)
+  const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
+  return {
+    metrics: ['Accuracy', 'Precision', 'Recall', 'F1', 'AUC'],
+    values: [accuracy, precision, recall, f1, auc ?? 0],
+    cards: { accuracy, precision, recall, f1 },
+  }
+}
 
 const TABS = [
   { key: 'rf_spam', label: 'RF Spam', cmLabels: ['Ham', 'Spam'] },
@@ -44,14 +62,17 @@ function ModelAnalytics() {
 
   const tab = TABS.find((t) => t.key === active)
   const data = cache[active]
+  const metrics = data ? metricsFromConfusion(data.confusion_matrix, data.roc?.auc) : null
 
   return (
-    <>
-      <NavBar />
-      <div className={styles.page}>
-        <ErrorBanner message={error} onDismiss={() => setError(null)} />
+    <div className={styles.page}>
+      <PageHeader
+        title="Model Analytics"
+        subtitle="Inspect confusion matrices, ROC curves, metric profiles and feature importance per model."
+      />
+      <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
-        <div className={styles.tabs}>
+      <div className={styles.tabs}>
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -67,6 +88,17 @@ function ModelAnalytics() {
 
         {data && (
           <>
+            {metrics && (
+              <div className={styles.metricCards}>
+                {Object.entries(metrics.cards).map(([k, v]) => (
+                  <div key={k} className={styles.metricCard}>
+                    <div className={styles.metricLabel}>{k}</div>
+                    <div className={styles.metricValue}>{(v * 100).toFixed(1)}%</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className={styles.topRow}>
               <div className={styles.card}>
                 <Heatmap matrix={data.confusion_matrix} labels={tab.cmLabels} title="Confusion Matrix" />
@@ -75,6 +107,16 @@ function ModelAnalytics() {
                 <LineChart fpr={data.roc.fpr} tpr={data.roc.tpr} auc={data.roc.auc} />
               </div>
             </div>
+
+            {metrics && (
+              <div className={styles.card}>
+                <RadarChart
+                  metrics={metrics.metrics}
+                  series={[{ name: tab.label, values: metrics.values }]}
+                  title={`${tab.label} — metric profile`}
+                />
+              </div>
+            )}
 
             <div className={styles.card}>
               <h3 className={styles.sectionTitle}>Feature Importance</h3>
@@ -92,7 +134,6 @@ function ModelAnalytics() {
           </>
         )}
       </div>
-    </>
   )
 }
 

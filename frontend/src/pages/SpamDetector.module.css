@@ -74,3 +74,12 @@
 .spamText { color: var(--danger); }
 .hamText { color: var(--success); }
 .exportRow { margin-top: 16px; display: flex; justify-content: flex-end; }
+
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.chartCard { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+
+@media (max-width: 860px) {
+  .singleLayout { grid-template-columns: 1fr; }
+  .chartsRow { grid-template-columns: 1fr; }
+  .statsGrid { grid-template-columns: 1fr; }
+}

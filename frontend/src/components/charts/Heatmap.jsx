@@ -1,21 +1,24 @@
 import { useRef, useEffect } from 'react'
 import Plotly from 'plotly.js-dist-min'
-import { DARK_LAYOUT, CHART_CONFIG } from './chartTheme'
+import { getChartLayout, CHART_CONFIG } from './chartTheme'
+import { useTheme } from '../../context/ThemeContext'
 
 // Confusion matrix heatmap. matrix = [[TN, FP], [FN, TP]], labels e.g. ['Ham','Spam'].
 function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
   const divRef = useRef(null)
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (!divRef.current) return
 
+    const base = getChartLayout()
     const traces = [
       {
         type: 'heatmap',
         z: matrix,
         x: labels,
         y: labels,
-        colorscale: [[0, '#1a1d2e'], [0.5, '#0099bb'], [1, '#00d4ff']],
+        colorscale: [[0, base.plot_bgcolor], [0.5, '#0099bb'], [1, '#00d4ff']],
         showscale: false,
         text: matrix.map((row) => row.map((v) => String(v))),
         texttemplate: '%{text}',
@@ -25,11 +28,11 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
     ]
 
     const layout = {
-      ...DARK_LAYOUT,
+      ...base,
       height: 360,
-      title: { text: title, font: { color: '#e8eaf0', size: 14 } },
-      xaxis: { ...DARK_LAYOUT.xaxis, title: 'Predicted', type: 'category' },
-      yaxis: { ...DARK_LAYOUT.yaxis, title: 'Actual', type: 'category', autorange: 'reversed' },
+      title: { text: title, font: { color: base.font.color, size: 14 } },
+      xaxis: { ...base.xaxis, title: 'Predicted', type: 'category' },
+      yaxis: { ...base.yaxis, title: 'Actual', type: 'category', autorange: 'reversed' },
     }
 
     Plotly.newPlot(divRef.current, traces, layout, CHART_CONFIG)
@@ -37,7 +40,7 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
     return () => {
       if (divRef.current) Plotly.purge(divRef.current)
     }
-  }, [matrix, labels, title])
+  }, [matrix, labels, title, theme])
 
   return <div ref={divRef} style={{ width: '100%', minHeight: '360px' }} />
 }

@@ -1,0 +1,41 @@
+.page { padding: 24px; max-width: 1400px; margin: 60px auto 0; }
+
+.kpiGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.kpiCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.kpiLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpiValue { font-size: 30px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+.spam { color: var(--accent); }
+.malware { color: var(--danger); }
+
+.row { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 20px; }
+.chartCard,
+.tableCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+
+.actions { display: flex; justify-content: flex-end; gap: 12px; }
+.clear {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.clear:hover { background: rgba(255, 77, 77, 0.1); }
+
+.emptyState {
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 64px 24px;
+  text-align: center;
+}
+.emptyIcon { font-size: 48px; line-height: 1; }
+.emptyTitle { font-size: 18px; color: var(--text-primary); margin-top: 16px; }
+.emptyText { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+@media (max-width: 860px) {
+  .kpiGrid { grid-template-columns: 1fr; }
+  .row { grid-template-columns: 1fr; }
+}

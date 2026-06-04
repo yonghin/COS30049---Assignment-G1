@@ -7,3 +7,13 @@
 .tab { background: none; border: none; padding: 10px 20px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
 .activeTab { color: var(--accent); border-bottom-color: var(--accent); }
 .sectionTitle { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+
+.metricCards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.metricCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.metricLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.metricValue { font-size: 24px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+
+@media (max-width: 860px) {
+  .topRow { grid-template-columns: 1fr; }
+  .metricCards { grid-template-columns: repeat(2, 1fr); }
+}
