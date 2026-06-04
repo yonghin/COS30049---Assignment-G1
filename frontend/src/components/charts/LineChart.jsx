@@ -17,6 +17,11 @@ function LineChart({
 }) {
   const divRef = useRef(null)
   const { theme } = useTheme()
+  // Refs to track user zoom state for the timeseries chart.
+  const isZoomedRef  = useRef(false)
+  const savedRangeRef = useRef(null)
+  // Ref to the attached relayout listener so we can remove it on unmount.
+  const listenerRef  = useRef(null)
 
   useEffect(() => {
     if (!divRef.current) return
@@ -55,7 +60,7 @@ function LineChart({
         yaxis: { ...base.yaxis, title: 'True Positive Rate', type: 'linear', range: [0, 1.02], tickmode: 'linear', tick0: 0, dtick: 0.2 },
       }
     } else {
-      const spam = spamSeries ?? []
+      const spam    = spamSeries    ?? []
       const malware = malwareSeries ?? []
       // Convert UTC timestamp → Malaysia time (UTC+8), then format as "YYYY-MM-DD HH:MM:SS"
       // for Plotly (which rejects ISO timezone offsets and treats bare strings as local time).
@@ -80,23 +85,64 @@ function LineChart({
           line: { color: COLORS.danger },
         },
       ]
+
+      // If the user has zoomed/panned, inject their saved range into the layout so
+      // Plotly.react never auto-ranges over it. Cleared when user hits Reset Axes.
+      const xAxis = isZoomedRef.current && savedRangeRef.current
+        ? { ...base.xaxis, title: 'Time', type: 'date', range: savedRangeRef.current.x, autorange: false }
+        : { ...base.xaxis, title: 'Time', type: 'date' }
+      const yAxis = isZoomedRef.current && savedRangeRef.current
+        ? { ...base.yaxis, title: 'Count', range: savedRangeRef.current.y, autorange: false }
+        : { ...base.yaxis, title: 'Count' }
+
       layout = {
         ...base,
         uirevision: 'timeseries',
         title: { text: title ?? 'Live Predictions', font: { color: base.font.color, size: 14 } },
-        xaxis: { ...base.xaxis, title: 'Time', type: 'date' },
-        yaxis: { ...base.yaxis, title: 'Count' },
+        xaxis: xAxis,
+        yaxis: yAxis,
       }
     }
 
     // Plotly.react updates data without resetting user zoom/pan (uirevision keeps UI state stable).
     Plotly.react(divRef.current, traces, layout, getChartConfig(Plotly))
+
+    // Attach the relayout listener once after Plotly has initialized the div
+    // (div.on is added by Plotly — must call after Plotly.react, not before).
+    if (!isRoc && !listenerRef.current) {
+      const div = divRef.current
+      listenerRef.current = (e) => {
+        if (e['xaxis.autorange'] === true) {
+          // User clicked Reset Axes — allow auto-range again.
+          isZoomedRef.current  = false
+          savedRangeRef.current = null
+        } else if ('xaxis.range[0]' in e || 'xaxis.range' in e) {
+          // User zoomed or panned — save range from Plotly's internal layout.
+          isZoomedRef.current = true
+          if (div._fullLayout) {
+            savedRangeRef.current = {
+              x: div._fullLayout.xaxis.range.slice(),
+              y: div._fullLayout.yaxis.range.slice(),
+            }
+          }
+        }
+      }
+      div.on('plotly_relayout', listenerRef.current)
+    }
   }, [spamSeries, malwareSeries, fpr, tpr, auc, title, color, theme])
 
   // Purge only on unmount — not between data updates — so user zoom is preserved.
   useEffect(() => {
     const div = divRef.current
-    return () => { if (div) Plotly.purge(div) }
+    return () => {
+      if (div) {
+        if (listenerRef.current) {
+          try { div.removeListener('plotly_relayout', listenerRef.current) } catch (_) {}
+          listenerRef.current = null
+        }
+        Plotly.purge(div)
+      }
+    }
   }, [])
 
   return <div ref={divRef} style={{ width: '100%', minHeight: '400px' }} />
