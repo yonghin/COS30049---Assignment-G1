@@ -22,7 +22,7 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         showscale: false,
         text: matrix.map((row) => row.map((v) => String(v))),
         texttemplate: '%{text}',
-        textfont: { color: '#e8eaf0', size: 16 },
+        textfont: { color: theme === 'light' ? '#111827' : '#e8eaf0', size: 16 },
         hovertemplate: 'Actual %{y} / Predicted %{x}: %{z}<extra></extra>',
       },
     ]

@@ -20,7 +20,7 @@
 }
 
 .logo {
-  color: var(--accent);
+  color: var(--navbar-text);
   font-weight: 700;
   font-size: 18px;
 }
@@ -55,9 +55,6 @@
 :global([data-theme='light']) .active {
   color: #00d4ff;
   border-bottom-color: #00d4ff;
-}
-:global([data-theme='light']) .logo {
-  color: #00d4ff;
 }
 
 .right {
