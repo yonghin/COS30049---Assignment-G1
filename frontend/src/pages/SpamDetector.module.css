@@ -34,7 +34,7 @@
 .secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Enhancement 3 — sample preset buttons */
-.sampleRow  { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.sampleRow  { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 20px 0; }
 .sampleHint { font-size: 12px; color: var(--text-muted); }
 .sample {
   background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border);
@@ -67,6 +67,8 @@
 .confidence { color: var(--text-muted); font-size: 13px; }
 
 .batchControls { display: flex; gap: 12px; align-items: center; margin: 16px 0; }
+.batchControls .select  { flex: 1; width: auto; }
+.batchControls .primary { flex: 1; width: auto; margin-top: 0; }
 .statsGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0; }
 .statCard { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 .statValue { font-size: 28px; font-weight: 700; color: var(--accent); }
@@ -75,7 +77,7 @@
 .hamText { color: var(--success); }
 .exportRow { margin-top: 16px; display: flex; justify-content: flex-end; }
 
-.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.chartsRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; align-items: start; }
 .chartCard { background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 
 @media (max-width: 860px) {

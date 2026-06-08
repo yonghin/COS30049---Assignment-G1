@@ -31,7 +31,6 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
     ]
     const layout = {
       ...base,
-      height: 320,
       title: { text: title, font: { color: base.font.color, size: 14 } },
       showlegend: true,
     }
