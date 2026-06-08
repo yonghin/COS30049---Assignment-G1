@@ -7,23 +7,30 @@ import { useTheme } from '../../context/ThemeContext'
 //  - Time series mode: pass `spamSeries` / `malwareSeries` ([{timestamp, count}])
 //  - ROC mode:         pass `fpr` / `tpr` / `auc`
 function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
-  const containerRef  = useRef(null)
-  const zoomTransform = useRef(d3.zoomIdentity)   // persist zoom across data refreshes
+  const containerRef   = useRef(null)
+  const zoomTransform  = useRef(d3.zoomIdentity)   // persist zoom across data refreshes
+  const hiddenLinesRef = useRef(new Set())          // persist legend toggle state
   const { theme } = useTheme()
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const isRoc = Array.isArray(fpr) && Array.isArray(tpr)
+    const isRoc  = Array.isArray(fpr) && Array.isArray(tpr)
+    const hidden = hiddenLinesRef.current
 
     const draw = () => {
       d3.select(container).selectAll('*').remove()
 
       const { bg, text, muted, border } = getThemeColors()
-      const W  = container.clientWidth || 600
-      const H  = 400
-      const m  = { top: 44, right: 30, bottom: 60, left: 60 }
+      const W = container.clientWidth || 600
+
+      // Time series needs extra bottom margin to separate rotated tick labels,
+      // x-axis label, and the clickable legend — so use a taller canvas.
+      const H  = isRoc ? 400 : 400
+      const m  = isRoc
+        ? { top: 44, right: 30, bottom: 60, left: 60 }
+        : { top: 44, right: 30, bottom: 68, left: 60 }
       const iW = W - m.left - m.right
       const iH = H - m.top  - m.bottom
 
@@ -39,7 +46,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      // Tooltip
+      // Tooltip div
       const tip = d3.select(container)
         .append('div')
         .style('position', 'absolute').style('visibility', 'hidden')
@@ -51,7 +58,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
-      // Clip path so lines don't overflow axes during zoom
+      // Clip path prevents lines from overflowing axes during zoom
       const clipId = 'lc-clip'
       svg.append('defs').append('clipPath').attr('id', clipId)
         .append('rect').attr('width', iW).attr('height', iH)
@@ -70,9 +77,12 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
         const x = d3.scaleLinear().domain([0, 1]).range([0, iW])
         const y = d3.scaleLinear().domain([0, 1.02]).range([iH, 0])
 
-        // Grid
+        // Gridlines
         g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
-          .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
+          .call(ax => {
+            ax.select('.domain').remove()
+            ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3')
+          })
 
         g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x).ticks(6)).call(axisStyle)
         g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
@@ -91,26 +101,59 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
           .attr('stroke', color ?? COLORS.accent)
           .attr('stroke-width', 2.5)
 
-        // Axis labels
-        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 8)
-          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('False Positive Rate')
+        // Axis labels — placed well above the legend
+        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 28)
+          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted)
+          .text('False Positive Rate')
         svg.append('text')
           .attr('transform', `translate(14,${m.top + iH / 2}) rotate(-90)`)
-          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('True Positive Rate')
+          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted)
+          .text('True Positive Rate')
 
-        // Legend
-        ;[{ c: color ?? COLORS.accent, label: 'ROC' }, { c: COLORS.muted, label: 'Random', dash: '5,5' }].forEach(({ c, label, dash }, i) => {
-          const lx = m.left + iW / 2 - 70 + i * 90
-          const ly = H - 16
-          svg.append('line').attr('x1', lx).attr('y1', ly - 5).attr('x2', lx + 18).attr('y2', ly - 5)
+        // Legend — at the very bottom, 20+ px below axis label
+        const rocItems   = [
+          { c: color ?? COLORS.accent, label: 'ROC' },
+          { c: COLORS.muted,           label: 'Random', dash: '5,5' },
+        ]
+        const legTotalW  = rocItems.length * 90
+        const legStartX  = m.left + iW / 2 - legTotalW / 2
+        rocItems.forEach(({ c, label, dash }, i) => {
+          const lx = legStartX + i * 90
+          const ly = H - 8
+          svg.append('line')
+            .attr('x1', lx).attr('y1', ly - 5).attr('x2', lx + 18).attr('y2', ly - 5)
             .attr('stroke', c).attr('stroke-width', 2).attr('stroke-dasharray', dash ?? '')
           svg.append('text').attr('x', lx + 22).attr('y', ly)
             .style('font-size', '11px').style('fill', text).text(label)
         })
 
+        // Hover tooltip — crosshair bisector on ROC line
+        chartArea.append('rect')
+          .attr('width', iW).attr('height', iH)
+          .attr('fill', 'none').attr('pointer-events', 'all')
+          .style('cursor', 'crosshair')
+          .on('mousemove', function (event) {
+            const [mx] = d3.pointer(event)
+            const x0  = x.invert(mx)
+            const idx = Math.max(0, Math.min(fpr.length - 1, d3.bisectLeft(fpr, x0)))
+            tip.style('visibility', 'visible')
+              .html(`FPR: <strong>${fpr[idx].toFixed(4)}</strong><br>TPR: <strong>${tpr[idx].toFixed(4)}</strong>`)
+            const r = container.getBoundingClientRect()
+            tip.style('top',  `${event.clientY - r.top  - 10}px`)
+               .style('left', `${event.clientX - r.left + 12}px`)
+          })
+          .on('mouseleave', () => tip.style('visibility', 'hidden'))
+
       } else {
         // ── Time series ───────────────────────────────────────────────────────
-        const toMYT = s => s ? new Date(new Date(s).getTime() + 8 * 60 * 60 * 1000) : new Date(0)
+        // Convert UTC timestamp to a Date that D3's local-time formatters display as MYT (UTC+8)
+        const toMYT = s => {
+          if (!s) return new Date(0)
+          const d = new Date(s)
+          // Get the MYT wall-clock string then parse as a "fake local" Date
+          // so d3.timeFormat shows the correct MYT time regardless of browser timezone
+          return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur' }))
+        }
 
         const spamData    = (spamSeries    ?? []).map(p => ({ date: toMYT(p.timestamp), count: p.count }))
         const malwareData = (malwareSeries ?? []).map(p => ({ date: toMYT(p.timestamp), count: p.count }))
@@ -123,68 +166,109 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
           return
         }
 
-        const xExtent = d3.extent(allData, d => d.date)
-        const yMax    = d3.max(allData, d => d.count) || 1
+        const xExtent  = d3.extent(allData, d => d.date)
+        const yMax     = d3.max(allData, d => d.count) || 1
 
         const x = d3.scaleTime().domain(xExtent).range([0, iW])
         const y = d3.scaleLinear().domain([0, yMax]).range([iH, 0]).nice()
 
-        // Grid
+        // Pre-compute timestamp arrays for bisector (avoids re-mapping on every mousemove)
+        const spamTimes    = spamData.map(d => d.date.getTime())
+        const malwareTimes = malwareData.map(d => d.date.getTime())
+
+        // Track the current (possibly zoomed) x scale for tooltip bisector
+        let currentX = x
+
+        // Gridlines
         g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
-          .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
+          .call(ax => {
+            ax.select('.domain').remove()
+            ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3')
+          })
 
         const xAxisG = g.append('g').attr('transform', `translate(0,${iH})`)
-          .call(d3.axisBottom(x).ticks(6).tickFormat(d3.timeFormat('%m-%d %H:%M'))).call(axisStyle)
-          .call(ax => ax.selectAll('.tick text').attr('transform', 'rotate(-25)').style('text-anchor', 'end'))
+          .call(d3.axisBottom(x).ticks(6).tickFormat(d3.timeFormat('%H:%M')))
+          .call(axisStyle)
 
         g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
 
         const mkLine = xScale => d3.line().x(d => xScale(d.date)).y(d => y(d.count))
 
-        const spamPath    = chartArea.append('path').datum(spamData)
+        // Lines
+        const spamPath = chartArea.append('path').datum(spamData)
+          .attr('id', 'lc-spam-line')
           .attr('fill', 'none').attr('stroke', COLORS.accent).attr('stroke-width', 2)
           .attr('d', mkLine(x))
+          .attr('visibility', hidden.has('spam') ? 'hidden' : 'visible')
 
         const malwarePath = chartArea.append('path').datum(malwareData)
+          .attr('id', 'lc-malware-line')
           .attr('fill', 'none').attr('stroke', COLORS.danger).attr('stroke-width', 2)
           .attr('d', mkLine(x))
+          .attr('visibility', hidden.has('malware') ? 'hidden' : 'visible')
 
-        // Dots
-        const mkDots = (data, cls, col, xScale) =>
+        // Data-point dots with hover tooltip
+        const mkDots = (data, cls, col, xScale, key) =>
           chartArea.selectAll(`.${cls}`).data(data).join('circle')
             .attr('class', cls)
             .attr('cx', d => xScale(d.date)).attr('cy', d => y(d.count)).attr('r', 4)
             .attr('fill', col).attr('stroke', bg).attr('stroke-width', 1.5)
+            .attr('visibility', hidden.has(key) ? 'hidden' : 'visible')
             .style('cursor', 'crosshair')
             .on('mouseover', function (event, d) {
               d3.select(this).attr('r', 6)
               tip.style('visibility', 'visible')
-                .html(`${d3.timeFormat('%m-%d %H:%M')(d.date)}<br>Count: <strong>${d.count}</strong>`)
+                .html(`${d3.timeFormat('%m-%d %H:%M')(d.date)} (MYT)<br>Count: <strong>${d.count}</strong>`)
             })
             .on('mousemove', function (event) {
               const r = container.getBoundingClientRect()
               tip.style('top',  `${event.clientY - r.top  - 10}px`)
                  .style('left', `${event.clientX - r.left + 12}px`)
             })
-            .on('mouseout', function () { d3.select(this).attr('r', 4); tip.style('visibility', 'hidden') })
+            .on('mouseout', function () {
+              d3.select(this).attr('r', 4)
+              tip.style('visibility', 'hidden')
+            })
 
-        mkDots(spamData,    'spam-dot',    COLORS.accent,  x)
-        mkDots(malwareData, 'malware-dot', COLORS.danger,  x)
+        mkDots(spamData,    'spam-dot',    COLORS.accent, x, 'spam')
+        mkDots(malwareData, 'malware-dot', COLORS.danger, x, 'malware')
 
-        // Axis labels
-        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 4)
-          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('Time (MYT)')
+        // Axis labels — x label placed above the clickable legend
+        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 46)
+          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted)
+          .text('Time (MYT)')
         svg.append('text')
           .attr('transform', `translate(14,${m.top + iH / 2}) rotate(-90)`)
-          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('Count')
+          .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted)
+          .text('Count')
 
-        // Legend
-        ;[{ c: COLORS.accent, label: 'Spam' }, { c: COLORS.danger, label: 'Malware' }].forEach(({ c, label }, i) => {
-          const lx = m.left + iW / 2 - 60 + i * 90
-          const ly = H - 4
-          svg.append('circle').attr('cx', lx + 5).attr('cy', ly - 7).attr('r', 5).attr('fill', c)
-          svg.append('text').attr('x', lx + 14).attr('y', ly - 3)
+        // Clickable legend — clearly below the axis label
+        const tsItems   = [
+          { c: COLORS.accent, label: 'Spam',    key: 'spam' },
+          { c: COLORS.danger, label: 'Malware', key: 'malware' },
+        ]
+        const legTotalW = tsItems.length * 90
+        const legStartX = m.left + iW / 2 - legTotalW / 2
+        tsItems.forEach(({ c, label, key }, i) => {
+          const lx = legStartX + i * 90
+          const ly = H - 16
+
+          const legendG = svg.append('g')
+            .style('cursor', 'pointer')
+            .attr('opacity', hidden.has(key) ? 0.4 : 1)
+
+          legendG.append('circle').attr('cx', lx + 5).attr('cy', ly - 7).attr('r', 5).attr('fill', c)
+          legendG.append('text').attr('x', lx + 14).attr('y', ly - 3)
             .style('font-size', '11px').style('fill', text).text(label)
+
+          legendG.on('click', function () {
+            if (hidden.has(key)) hidden.delete(key)
+            else hidden.add(key)
+            const isHidden = hidden.has(key)
+            svg.select(`#lc-${key}-line`).attr('visibility', isHidden ? 'hidden' : 'visible')
+            chartArea.selectAll(`.${key}-dot`).attr('visibility', isHidden ? 'hidden' : 'visible')
+            d3.select(this).attr('opacity', isHidden ? 0.4 : 1)
+          })
         })
 
         // Zoom behaviour (preserve state across live refreshes)
@@ -195,22 +279,44 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
           .on('zoom', event => {
             zoomTransform.current = event.transform
             const newX = event.transform.rescaleX(x)
-            xAxisG.call(d3.axisBottom(newX).ticks(6).tickFormat(d3.timeFormat('%m-%d %H:%M'))).call(axisStyle)
-              .call(ax => ax.selectAll('.tick text').attr('transform', 'rotate(-25)').style('text-anchor', 'end'))
+            currentX   = newX   // keep tooltip bisector in sync
+            xAxisG.call(d3.axisBottom(newX).ticks(6).tickFormat(d3.timeFormat('%H:%M'))).call(axisStyle)
             spamPath.attr('d',    mkLine(newX)(spamData))
             malwarePath.attr('d', mkLine(newX)(malwareData))
             chartArea.selectAll('.spam-dot').attr('cx',    d => newX(d.date))
             chartArea.selectAll('.malware-dot').attr('cx', d => newX(d.date))
           })
 
-        // Overlay rect to capture zoom events
+        // Overlay rect: captures both zoom gestures and hover-tooltip events
         svg.append('rect')
           .attr('transform', `translate(${m.left},${m.top})`)
           .attr('width', iW).attr('height', iH)
           .attr('fill', 'none').attr('pointer-events', 'all')
           .call(zoomBehavior)
-          // Restore previous zoom if data refreshed while user was zoomed
           .call(zoomBehavior.transform, zoomTransform.current)
+          // .tip namespace keeps this separate from zoom's own mouse listeners
+          .on('mousemove.tip', function (event) {
+            const [mx]  = d3.pointer(event)
+            const xVal  = currentX.invert(mx)
+            const t     = xVal.getTime()
+            let html    = ''
+
+            if (spamData.length && !hidden.has('spam')) {
+              const bi = Math.max(0, Math.min(spamData.length - 1, d3.bisectLeft(spamTimes, t)))
+              html += `${d3.timeFormat('%m-%d %H:%M')(spamData[bi].date)} (MYT)<br>Spam: <strong>${spamData[bi].count}</strong><br>`
+            }
+            if (malwareData.length && !hidden.has('malware')) {
+              const bi = Math.max(0, Math.min(malwareData.length - 1, d3.bisectLeft(malwareTimes, t)))
+              html += `Malware: <strong>${malwareData[bi].count}</strong>`
+            }
+            if (html) {
+              tip.style('visibility', 'visible').html(html)
+              const r = container.getBoundingClientRect()
+              tip.style('top',  `${event.clientY - r.top  - 10}px`)
+                 .style('left', `${event.clientX - r.left + 12}px`)
+            }
+          })
+          .on('mouseleave.tip', () => tip.style('visibility', 'hidden'))
       }
     }
 

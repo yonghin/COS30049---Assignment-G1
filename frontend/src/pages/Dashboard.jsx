@@ -94,14 +94,19 @@ function Dashboard() {
   const sumSpam = spamSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
   const sumMalware = malwareSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
 
-  const fmtMYT = (ts) => new Date(ts).toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })
+  const fmtMYT = (ts) => new Date(ts).toLocaleString('en-MY', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
 
   const activityRows = [
-    ...spamSeries.map((p) => ({ timestamp: fmtMYT(p.timestamp), task: 'spam', count: p.count })),
-    ...malwareSeries.map((p) => ({ timestamp: fmtMYT(p.timestamp), task: 'malware', count: p.count })),
+    ...spamSeries.map((p) => ({ _ts: p.timestamp, timestamp: fmtMYT(p.timestamp), task: 'spam', count: p.count })),
+    ...malwareSeries.map((p) => ({ _ts: p.timestamp, timestamp: fmtMYT(p.timestamp), task: 'malware', count: p.count })),
   ]
-    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+    .sort((a, b) => (a._ts > b._ts ? -1 : 1))
     .slice(0, 10)
+    .map(({ _ts, ...row }) => row)
 
   // Memoized chart props — prevent charts from re-rendering on every 5-second poll tick.
   const radarSeries = useMemo(
