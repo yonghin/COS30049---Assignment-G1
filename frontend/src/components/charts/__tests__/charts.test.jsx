@@ -1,18 +1,10 @@
 import { render } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
-import Plotly from 'plotly.js-dist-min'
+import { describe, it, expect } from 'vitest'
 import BarChart from '../BarChart'
 import LineChart from '../LineChart'
 import GaugeChart from '../GaugeChart'
 import ScatterPlot from '../ScatterPlot'
 import Heatmap from '../Heatmap'
-
-// Mock Plotly so jsdom doesn't need a real canvas. Provide both a default export
-// (charts use `import Plotly from 'plotly.js-dist-min'`) and named exports.
-vi.mock('plotly.js-dist-min', () => {
-  const mock = { newPlot: vi.fn(), purge: vi.fn(), react: vi.fn() }
-  return { default: mock, ...mock }
-})
 
 describe('Chart components smoke tests', () => {
   it('BarChart renders container div', () => {
@@ -41,8 +33,8 @@ describe('Chart components smoke tests', () => {
     )
     expect(container.querySelector('div')).toBeTruthy()
   })
-  it('Plotly.newPlot called when BarChart mounts', () => {
-    render(<BarChart models={['m']} accuracy={[0.9]} f1={[0.9]} auc={[0.9]} />)
-    expect(Plotly.newPlot).toHaveBeenCalled()
+  it('BarChart renders an SVG element via D3', () => {
+    const { container } = render(<BarChart models={['m']} accuracy={[0.9]} f1={[0.9]} auc={[0.9]} />)
+    expect(container.querySelector('svg')).toBeTruthy()
   })
 })

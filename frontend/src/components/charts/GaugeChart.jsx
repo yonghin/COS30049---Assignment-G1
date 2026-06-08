@@ -1,48 +1,104 @@
 import { useRef, useEffect } from 'react'
-import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
+import * as d3 from 'd3'
+import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
-// Spam probability gauge. spamProb === null renders an empty gauge at 0.
+// Semicircle gauge: flat side at bottom, 0 at 9-o'clock, 100 at 3-o'clock.
 function GaugeChart({ spamProb = null, label }) {
-  const divRef = useRef(null)
+  const containerRef = useRef(null)
   const { theme } = useTheme()
 
   useEffect(() => {
-    if (!divRef.current) return
+    const container = containerRef.current
+    if (!container) return
 
-    const base = getChartLayout()
-    const barColor = (spamProb ?? 0) >= 0.5 ? COLORS.danger : COLORS.success
-    const traces = [
-      {
-        type: 'indicator',
-        mode: 'gauge+number',
-        value: Math.round((spamProb ?? 0) * 100),
-        number: { suffix: '%', font: { color: base.font.color, size: 36 } },
-        title: { text: label ?? 'Spam Probability', font: { color: COLORS.muted, size: 14 } },
-        gauge: {
-          axis: { range: [0, 100], tickcolor: COLORS.muted },
-          bar: { color: barColor },
-          bgcolor: base.plot_bgcolor,
-          bordercolor: base.xaxis.gridcolor,
-          steps: [
-            { range: [0, 50], color: 'rgba(0,204,136,0.15)' },
-            { range: [50, 100], color: 'rgba(255,77,77,0.15)' },
-          ],
-          threshold: { line: { color: barColor, width: 3 }, thickness: 0.75, value: (spamProb ?? 0) * 100 },
-        },
-      },
-    ]
-    const layout = { ...base, height: 300, margin: { l: 30, r: 30, t: 30, b: 30 } }
+    const draw = () => {
+      d3.select(container).selectAll('*').remove()
 
-    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
+      const { bg, text, muted, border } = getThemeColors()
+      const W  = container.clientWidth || 400
+      const H  = 300
+      const cx = W / 2
+      const cy = H * 0.78
+      // Radius fits inside the upper portion, leaving room for tick labels outside.
+      const radius = Math.min(cx * 0.75, cy - 30)
 
-    return () => {
-      if (divRef.current) Plotly.purge(divRef.current)
+      const svg = d3.select(container)
+        .append('svg')
+        .attr('width', '100%').attr('height', H)
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .style('background', bg)
+
+      const val       = spamProb ?? 0
+      const barColor  = val >= 0.5 ? COLORS.danger : COLORS.success
+      const valuePct  = Math.round(val * 100)
+
+      // Angle scale: 0 → -π/2 (9-o'clock), 100 → π/2 (3-o'clock)
+      // D3 arc: 0 = up (12-o'clock), +CW
+      const startAngle = -Math.PI / 2
+      const endAngle   =  Math.PI / 2
+      const aScale = d3.scaleLinear().domain([0, 100]).range([startAngle, endAngle])
+
+      const mkArc = (r0, r1, a0, a1) =>
+        d3.arc().innerRadius(r0).outerRadius(r1).startAngle(a0).endAngle(a1)()
+
+      const g = svg.append('g').attr('transform', `translate(${cx},${cy})`)
+
+      // Track
+      g.append('path').attr('d', mkArc(radius * 0.6, radius, startAngle, endAngle))
+        .attr('fill', border)
+
+      // Green zone (0-50)
+      g.append('path').attr('d', mkArc(radius * 0.6, radius, startAngle, aScale(50)))
+        .attr('fill', 'rgba(0,204,136,0.18)')
+
+      // Red zone (50-100)
+      g.append('path').attr('d', mkArc(radius * 0.6, radius, aScale(50), endAngle))
+        .attr('fill', 'rgba(255,77,77,0.18)')
+
+      // Value arc
+      g.append('path').attr('d', mkArc(radius * 0.62, radius * 0.88, startAngle, aScale(valuePct)))
+        .attr('fill', barColor)
+
+      // Threshold line at current value
+      const a  = aScale(valuePct)
+      const sx = Math.sin(a), cy2 = Math.cos(a)
+      g.append('line')
+        .attr('x1', radius * 0.55 * sx).attr('y1', -radius * 0.55 * cy2)
+        .attr('x2', radius       * sx).attr('y2', -radius       * cy2)
+        .attr('stroke', barColor).attr('stroke-width', 3)
+
+      // Tick marks + labels (0, 25, 50, 75, 100)
+      ;[0, 25, 50, 75, 100].forEach(tick => {
+        const ta = aScale(tick)
+        const ts = Math.sin(ta), tc = Math.cos(ta)
+        g.append('line')
+          .attr('x1', radius * 1.02 * ts).attr('y1', -radius * 1.02 * tc)
+          .attr('x2', radius * 1.12 * ts).attr('y2', -radius * 1.12 * tc)
+          .attr('stroke', muted).attr('stroke-width', 1.5)
+        g.append('text')
+          .attr('x', radius * 1.25 * ts).attr('y', -radius * 1.25 * tc)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .style('font-size', '10px').style('fill', muted).text(tick)
+      })
+
+      // Centre value
+      g.append('text').attr('text-anchor', 'middle').attr('y', -radius * 0.12)
+        .style('font-size', '36px').style('font-weight', '700').style('fill', barColor)
+        .text(`${valuePct}%`)
+
+      // Label below the arc opening
+      g.append('text').attr('text-anchor', 'middle').attr('y', 28)
+        .style('font-size', '13px').style('fill', muted)
+        .text(label ?? 'Spam Probability')
     }
+
+    draw()
+    window.addEventListener('resize', draw)
+    return () => window.removeEventListener('resize', draw)
   }, [spamProb, label, theme])
 
-  return <div ref={divRef} style={{ width: '100%', minHeight: '300px' }} />
+  return <div ref={containerRef} style={{ width: '100%', minHeight: '300px', position: 'relative' }} />
 }
 
 export default GaugeChart

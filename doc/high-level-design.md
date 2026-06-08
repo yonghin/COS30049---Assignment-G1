@@ -32,7 +32,7 @@ graph TD
 | Module | Path | Responsibility |
 |---|---|---|
 | **Pages** | `src/pages/` | Four top-level route views: Dashboard, SpamDetector, MalwareDetector, ModelAnalytics |
-| **Charts** | `src/components/charts/` | Five reusable Plotly.js chart wrappers (one per chart type) |
+| **Charts** | `src/components/charts/` | Eight reusable D3.js v7 chart components (one per chart type) |
 | **UI Components** | `src/components/` | NavBar, ErrorBanner, ResultsTable, FileUploadWidget, ExportButton, ProgressIndicator |
 | **API Client** | `src/api/client.js` | Axios instance with base URL and global error interceptor |
 | **API Modules** | `src/api/` | Per-domain function sets: `spamApi`, `malwareApi`, `analyticsApi`, `historyApi` |
@@ -163,7 +163,7 @@ Dashboard page (mounted)
 | Module | Owns | Does NOT own |
 |---|---|---|
 | Pages | UI state, user interaction logic | HTTP calls, chart rendering, ML logic |
-| Charts | Plotly figure creation and update | Data fetching, business logic |
+| Charts | D3 SVG rendering and update | Data fetching, business logic |
 | API Client | Base URL, auth headers, error interception | Request content, response mapping |
 | API Modules | Endpoint paths, request/response shape | HTTP transport, UI state |
 | App Entry | App lifecycle, CORS, routing | Business logic |

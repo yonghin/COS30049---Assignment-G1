@@ -1,9 +1,8 @@
 import { useRef, useEffect } from 'react'
-import Plotly from 'plotly.js-dist-min'
-import { getChartLayout, COLORS, getChartConfig } from './chartTheme'
+import * as d3 from 'd3'
+import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 
-// Distribution histogram for a single numeric series (e.g. prediction confidence).
 function Histogram({
   values = [],
   title = 'Confidence Distribution',
@@ -11,38 +10,108 @@ function Histogram({
   color = COLORS.accent,
   nbins = 20,
 }) {
-  const divRef = useRef(null)
+  const containerRef = useRef(null)
   const { theme } = useTheme()
 
   useEffect(() => {
-    if (!divRef.current) return
+    const container = containerRef.current
+    if (!container) return
 
-    const base = getChartLayout()
-    const traces = [
-      {
-        type: 'histogram',
-        x: values,
-        nbinsx: nbins,
-        marker: { color, line: { color: base.plot_bgcolor, width: 1 } },
-        opacity: 0.85,
-      },
-    ]
-    const layout = {
-      ...base,
-      title: { text: title, font: { color: base.font.color, size: 14 } },
-      bargap: 0.05,
-      xaxis: { ...base.xaxis, title: xLabel },
-      yaxis: { ...base.yaxis, title: 'Count' },
+    const draw = () => {
+      d3.select(container).selectAll('*').remove()
+
+      const { bg, text, muted, border } = getThemeColors()
+      const W  = container.clientWidth || 500
+      const H  = 400
+      const m  = { top: 44, right: 30, bottom: 60, left: 60 }
+      const iW = W - m.left - m.right
+      const iH = H - m.top  - m.bottom
+
+      const svg = d3.select(container)
+        .append('svg')
+        .attr('width', '100%').attr('height', H)
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .style('background', bg)
+
+      if (!values.length) {
+        svg.append('text')
+          .attr('x', W / 2).attr('y', H / 2)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .style('fill', muted).style('font-size', '13px').text('No data')
+        return
+      }
+
+      const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
+
+      // Tooltip
+      const tip = d3.select(container)
+        .append('div')
+        .style('position', 'absolute').style('visibility', 'hidden')
+        .style('background', bg).style('color', text)
+        .style('padding', '7px 11px').style('border-radius', '6px')
+        .style('font-size', '13px').style('pointer-events', 'none')
+        .style('border', `1px solid ${muted}`).style('z-index', '20')
+        .style('white-space', 'nowrap')
+
+      const x = d3.scaleLinear().domain(d3.extent(values)).range([0, iW]).nice()
+      const bins = d3.bin().domain(x.domain()).thresholds(nbins)(values)
+      const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([iH, 0]).nice()
+
+      // Grid
+      g.append('g')
+        .call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
+        .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
+
+      // Axes
+      g.append('g').attr('transform', `translate(0,${iH})`)
+        .call(d3.axisBottom(x).ticks(6))
+        .call(ax => { ax.select('.domain').attr('stroke', border); ax.selectAll('.tick line').attr('stroke', border); ax.selectAll('.tick text').style('fill', muted) })
+
+      g.append('g')
+        .call(d3.axisLeft(y).ticks(5))
+        .call(ax => { ax.select('.domain').attr('stroke', border); ax.selectAll('.tick line').attr('stroke', border); ax.selectAll('.tick text').style('fill', muted) })
+
+      // Bars
+      g.selectAll('rect')
+        .data(bins)
+        .join('rect')
+        .attr('x', d => x(d.x0) + 1)
+        .attr('y', d => y(d.length))
+        .attr('width', d => Math.max(0, x(d.x1) - x(d.x0) - 2))
+        .attr('height', d => iH - y(d.length))
+        .attr('fill', color).attr('opacity', 0.85)
+        .style('cursor', 'pointer')
+        .on('mouseover', function (event, d) {
+          d3.select(this).attr('opacity', 1)
+          tip.style('visibility', 'visible')
+            .html(`Range: ${d.x0.toFixed(2)} – ${d.x1.toFixed(2)}<br>Count: <strong>${d.length}</strong>`)
+        })
+        .on('mousemove', function (event) {
+          const r = container.getBoundingClientRect()
+          tip.style('top',  `${event.clientY - r.top  - 10}px`)
+             .style('left', `${event.clientX - r.left + 12}px`)
+        })
+        .on('mouseout', function () { d3.select(this).attr('opacity', 0.85); tip.style('visibility', 'hidden') })
+
+      // Title
+      svg.append('text').attr('x', W / 2).attr('y', 22).attr('text-anchor', 'middle')
+        .style('font-size', '14px').style('fill', text).text(title)
+
+      // Axis labels
+      svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 8)
+        .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text(xLabel)
+
+      svg.append('text')
+        .attr('transform', `translate(14,${m.top + iH / 2}) rotate(-90)`)
+        .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('Count')
     }
 
-    Plotly.newPlot(divRef.current, traces, layout, getChartConfig(Plotly))
-
-    return () => {
-      if (divRef.current) Plotly.purge(divRef.current)
-    }
+    draw()
+    window.addEventListener('resize', draw)
+    return () => window.removeEventListener('resize', draw)
   }, [values, title, xLabel, color, nbins, theme])
 
-  return <div ref={divRef} style={{ width: '100%', minHeight: '320px' }} />
+  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
 
 export default Histogram

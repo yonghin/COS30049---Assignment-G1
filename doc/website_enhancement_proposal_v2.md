@@ -27,8 +27,8 @@ This v2 focuses on **UI/UX polish, more charts, more interactive features, and r
 | **Malware Detector** | `/malware` | CSV upload → totals, PCA scatter, results table | [MalwareDetector.jsx](../frontend/src/pages/MalwareDetector.jsx) |
 | **Model Analytics** | `/analytics` | Per-model confusion matrix, ROC, feature importance | [ModelAnalytics.jsx](../frontend/src/pages/ModelAnalytics.jsx) |
 
-**Charts today (5):** Bar, Line, Gauge, Scatter, Heatmap — all Plotly via `plotly.js-dist-min`, themed
-by [chartTheme.js](../frontend/src/components/charts/chartTheme.js) (dark-only).
+**Charts today (8):** Bar, Line, Gauge, Scatter, Heatmap, Radar, Histogram, Donut — all D3.js v7,
+themed by [chartTheme.js](../frontend/src/components/charts/chartTheme.js) (light/dark toggle).
 **Layout:** top [NavBar](../frontend/src/components/NavBar.jsx) only — **no footer**, **no shared layout
 wrapper** (each page renders its own NavBar), **dark theme only**.
 
@@ -67,20 +67,19 @@ wrapper** (each page renders its own NavBar), **dark theme only**.
 
 ---
 
-## 3. More charts (3 new Plotly types)
+## 3. More charts (3 new D3 types)
 
-New components in `frontend/src/components/charts/`, following the existing div-ref +
-`Plotly.newPlot` + `Plotly.purge` pattern:
+New components in `frontend/src/components/charts/`, following the D3.js v7 SVG pattern:
 
-| Component | Plotly type | Primary placement |
-| --------- | ----------- | ----------------- |
-| `RadarChart.jsx` | `scatterpolar` (fill) | **Model Analytics** + **Dashboard** — compare models on accuracy / precision / recall / F1 in one figure |
-| `Histogram.jsx` | `histogram` | **Spam** batch + **Malware** results — confidence distribution |
-| `DonutChart.jsx` | `pie` (hole 0.5) | **Dashboard** + batch/History — ham vs spam / benign vs malware vs anomaly |
+| Component | D3 technique | Primary placement |
+| --------- | ------------ | ----------------- |
+| `RadarChart.jsx` | polygon grid rings + series | **Model Analytics** + **Dashboard** — compare models on accuracy / precision / recall / F1 in one figure |
+| `Histogram.jsx` | `d3.bin` bars | **Spam** batch + **Malware** results — confidence distribution |
+| `DonutChart.jsx` | `d3.pie` + `d3.arc` | **Dashboard** + batch/History — ham vs spam / benign vs malware vs anomaly |
 
-**Theme-aware charts:** [chartTheme.js](../frontend/src/components/charts/chartTheme.js) currently
-hardcodes dark hex. It is refactored to `getChartLayout(theme)` (reads the active theme / CSS
-variables) so **all charts** (old + new) recolor when the user toggles light/dark.
+**Theme-aware charts:** [chartTheme.js](../frontend/src/components/charts/chartTheme.js) exports
+`getThemeColors()` which reads CSS custom properties so **all charts** recolor when the user toggles
+light/dark.
 
 **Tests:** smoke tests mirroring existing chart tests. **No backend change.**
 
@@ -190,5 +189,5 @@ this doc.
    theme toggle recolors the whole app incl. charts and persists across reload; a spam/malware
    prediction shows a toast and appears on `/history` after reload; tables search/sort/filter; footer
    + PageHeader on every page.
-2. `npm run build` succeeds (charts still bundle under Vite 8 / `plotly.js-dist-min`).
+2. `npm run build` succeeds (D3.js bundles cleanly under Vite 8).
 3. `npm test` — existing 21 pass + new smoke tests pass.

@@ -10,7 +10,7 @@
   cd frontend && npm install
   ```
 - [ ] Install dependencies:
-  - [ ] `npm install axios react-router-dom plotly.js`
+  - [ ] `npm install axios react-router-dom d3`
 - [ ] Set up directory structure under `src/`:
   ```
   src/

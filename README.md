@@ -34,7 +34,7 @@ NTCyber AI is a two-part project:
   scikit-learn models (classification, clustering, regression) saved as `.pkl` files under
   `outputs/models/`.
 - **Assignment 3 — Web Platform.** A `backend/` (FastAPI) loads those models at startup and
-  exposes a REST API; a `frontend/` (React + Vite, Plotly charts) consumes it. Users can:
+  exposes a REST API; a `frontend/` (React + Vite, D3 charts) consumes it. Users can:
   - **Spam Detector** — classify a single message or batch-upload a `.txt`/`.csv`, with a live
     probability gauge (Random Forest / Naive Bayes / Logistic Regression).
   - **Malware Detector** — upload a memory-feature CSV (or load sample data) and get per-row
@@ -56,7 +56,7 @@ NTCyber AI is a two-part project:
 │   • SpamDetector         │                              │   • precompute analytics     │
 │   • MalwareDetector      │                              │                              │
 │   • ModelAnalytics       │      app.state.registry  ───▶│  services: spam / malware /  │
-│  Plotly charts           │      app.state.analytics     │            analytics         │
+│  D3 charts               │      app.state.analytics     │            analytics         │
 │  Axios api/ clients      │                              │  routers:  /api/spam …       │
 └──────────────────────────┘                              └───────────────┬──────────────┘
                                                                            │ reads (never writes)
@@ -84,7 +84,7 @@ COS30049---Assignment-G1/
 │   └── tests/                   ← 46 pytest tests (services + routers)
 │
 ├── frontend/                    ← React + Vite SPA (Assignment 3)
-│   ├── index.html               ← includes window.global shim for Plotly
+│   ├── index.html               ← SPA entry point
 │   ├── vite.config.js           ← Vite + Vitest config
 │   ├── package.json
 │   └── src/
@@ -125,7 +125,7 @@ COS30049---Assignment-G1/
 | ML runtime       | Python 3.13 · scikit-learn 1.8 · pandas 3.0 · numpy 2.4                      |
 | Backend          | FastAPI 0.136 · uvicorn · pydantic v2 · python-multipart                     |
 | Backend tests    | pytest · FastAPI `TestClient` (httpx)                                        |
-| Frontend         | React 19 · Vite 8 · React Router 7 · Axios · **plotly.js-dist-min** · CSS Modules |
+| Frontend         | React 19 · Vite 8 · React Router 7 · Axios · **D3.js v7** · CSS Modules           |
 | Frontend tests   | Vitest 4 · @testing-library/react · MSW (Mock Service Worker)               |
 
 > **Note on versions.** The design prompt pinned older versions (sklearn 1.7.2, pandas 2.2,
@@ -220,9 +220,9 @@ npm run preview      # serve the production build
 
 - **Design system** — a dark cybersecurity theme defined via CSS variables in
   `src/index.css`, applied through per-component CSS Modules.
-- **Charts** — all five chart components import **`plotly.js-dist-min`** (the prebuilt browser
-  bundle) and render with `Plotly.newPlot` + `Plotly.purge` cleanup. The full `plotly.js` source
-  package does **not** bundle under Vite 8 — see [Troubleshooting](#troubleshooting).
+- **Charts** — all eight chart components (`BarChart`, `LineChart`, `GaugeChart`, `DonutChart`,
+  `Histogram`, `RadarChart`, `Heatmap`, `ScatterPlot`) are built with **D3.js v7** using SVG
+  rendering. Each chart supports hover tooltips, responsive resize, and light/dark theme switching.
 - **API base URL** — hard-coded to `http://localhost:8000` in `src/api/client.js`.
 
 ---
@@ -244,7 +244,7 @@ npm test             # vitest run (one-shot)
 npm run test:watch   # watch mode
 ```
 
-Frontend tests mock Plotly and use **MSW** to stub the API, so they run without a live backend.
+Frontend tests use **MSW** to stub the API, so they run without a live backend.
 All 46 backend + 21 frontend tests pass on the verified environment.
 
 ---
@@ -310,8 +310,6 @@ Outputs land in `data/processed/`, `outputs/models/`, `outputs/validation/`, and
 | `RuntimeError: Missing required file …`                   | A `.pkl` or processed CSV is absent                            | Run the [ML pipeline](#the-ml-pipeline-assignment-2) to regenerate outputs          |
 | `InconsistentVersionWarning` on startup                   | `.pkl` trained on sklearn 1.7.2, loaded on 1.8                 | Harmless — models still load and predict correctly                                  |
 | Dashboard shows an error banner                           | Backend not running / not reachable                            | Start the backend first; confirm `/api/health` returns ok                           |
-| **Blank white page** in the browser                       | The full `plotly.js` source can't bundle under Vite 8/Rolldown | Already fixed — charts import `plotly.js-dist-min`. Restart `npm run dev` + hard-refresh |
-| `ReferenceError: global is not defined` in console        | Plotly expects the Node `global`                               | `index.html` ships a `window.global` shim; use `plotly.js-dist-min`                 |
 | Vite picks up new deps but page still broken              | Old dev server / cached deps                                   | Stop the dev server, `npm run dev` again, hard-refresh (Ctrl+Shift+R)               |
 | `conda: command not found` (ML scripts)                   | Running in Git Bash, not Anaconda Prompt                       | Open **Anaconda Prompt**                                                            |
 

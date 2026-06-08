@@ -76,7 +76,7 @@ Today the single-message result shows only a gauge + label + confidence. Notably
 ### 3a. Ham vs Spam breakdown
 - Add a dual bar (or donut) next to the existing `GaugeChart` showing **`ham_prob` vs `spam_prob`** side by side.
 - Data is already in `result` — the gauge just throws `ham_prob` away today.
-- Reuse [BarChart.jsx](../frontend/src/components/charts/BarChart.jsx) (or a small donut via Plotly).
+- Reuse [BarChart.jsx](../frontend/src/components/charts/BarChart.jsx) (or [DonutChart.jsx](../frontend/src/components/charts/DonutChart.jsx) via D3).
 
 ### 3b. Keyword highlighting
 - Re-render the analyzed message with **spam-signal words highlighted**, so the user sees *why* a

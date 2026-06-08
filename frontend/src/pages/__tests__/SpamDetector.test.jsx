@@ -2,13 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { vi, describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import SpamDetector from '../SpamDetector'
-
-vi.mock('plotly.js-dist-min', () => {
-  const mock = { react: vi.fn(), newPlot: vi.fn(), purge: vi.fn() }
-  return { default: mock, ...mock }
-})
 
 const server = setupServer(
   http.post('http://localhost:8000/api/spam/predict', () =>

@@ -2,13 +2,8 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
-import { vi, describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import ModelAnalytics from '../ModelAnalytics'
-
-vi.mock('plotly.js-dist-min', () => {
-  const mock = { react: vi.fn(), newPlot: vi.fn(), purge: vi.fn() }
-  return { default: mock, ...mock }
-})
 
 const mockData = {
   model: 'rf_spam',

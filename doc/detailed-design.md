@@ -885,22 +885,32 @@ Renders an overflow-scrollable table. Boolean cells render as ✓ or ✗.
 
 ### 5.4 Chart Components — `src/components/charts/`
 
-All chart components are **stateless** — they receive data via props and call `Plotly.react()` in a `useEffect` when data changes.
+All chart components are **stateless** — they receive data via props and redraw an SVG via D3 in a `useEffect` when data or theme changes.
 
 **Shared pattern:**
 
 ```jsx
 function SomeChart({ data, title }) {
-    const divRef = useRef(null);
+    const containerRef = useRef(null)
+    const { theme } = useTheme()
     useEffect(() => {
-        if (!divRef.current || !data) return;
-        Plotly.react(divRef.current, traces, layout, config);
-    }, [data, title]);
-    return <div ref={divRef} />;
+        const container = containerRef.current
+        if (!container) return
+        const draw = () => {
+            d3.select(container).selectAll('*').remove()
+            const { bg, text, muted, border } = getThemeColors()
+            const W = container.clientWidth || 600
+            // ... build SVG with d3.select(container).append('svg') ...
+        }
+        draw()
+        window.addEventListener('resize', draw)
+        return () => window.removeEventListener('resize', draw)
+    }, [data, title, theme])
+    return <div ref={containerRef} style={{ width: '100%', position: 'relative' }} />
 }
 ```
 
-All charts include `config={{ displayModeBar: true, toImageButtonOptions: { format: 'png' } }}` to enable the built-in Plotly PNG download button.
+All charts support hover tooltips, responsive resize, and light/dark theme switching via CSS variables.
 
 #### `BarChart.jsx`
 
@@ -940,7 +950,7 @@ interface GaugeChartProps {
 }
 ```
 
-Renders a Plotly indicator gauge (type: `'indicator'`, mode: `'gauge+number'`). Color transitions red ≥ 0.5 else green.
+Renders a D3 semicircle gauge using `d3.arc`. Color transitions red ≥ 0.5 else green.
 
 #### `ScatterPlot.jsx`
 
@@ -969,7 +979,7 @@ interface HeatmapProps {
 }
 ```
 
-Renders a Plotly `heatmap` trace with annotated cell values.
+Renders a D3 `scaleBand` heatmap with multi-stop colour scale and annotated cell values.
 
 ---
 

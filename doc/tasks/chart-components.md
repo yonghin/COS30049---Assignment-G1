@@ -1,18 +1,32 @@
 # Module: Chart Components
 
-**Files:** `src/components/charts/BarChart.jsx`, `LineChart.jsx`, `GaugeChart.jsx`, `ScatterPlot.jsx`, `Heatmap.jsx`
+**Files:** `src/components/charts/BarChart.jsx`, `LineChart.jsx`, `GaugeChart.jsx`, `ScatterPlot.jsx`, `Heatmap.jsx`, `DonutChart.jsx`, `Histogram.jsx`, `RadarChart.jsx`
 
-All chart components are stateless. They receive data via props and call `Plotly.react()` in a `useEffect` when props change. All include `config={{ displayModeBar: true, toImageButtonOptions: { format: 'png' } }}`.
+All chart components are built with **D3.js v7**. They receive data via props and redraw the SVG inside a `useEffect` when props or theme change.
 
 ## Shared Pattern
 
 ```jsx
-const divRef = useRef(null);
+const containerRef = useRef(null)
+const { theme } = useTheme()
+
 useEffect(() => {
-    if (!divRef.current || !data) return;
-    Plotly.react(divRef.current, traces, layout, config);
-}, [data]);
-return <div ref={divRef} />;
+  const container = containerRef.current
+  if (!container) return
+
+  const draw = () => {
+    d3.select(container).selectAll('*').remove()
+    const { bg, text, muted, border } = getThemeColors()
+    const W = container.clientWidth || 600
+    // ... build SVG with d3.select(container).append('svg') ...
+  }
+
+  draw()
+  window.addEventListener('resize', draw)
+  return () => window.removeEventListener('resize', draw)
+}, [data, theme])
+
+return <div ref={containerRef} style={{ width: '100%', position: 'relative' }} />
 ```
 
 ## Tasks
@@ -32,24 +46,38 @@ return <div ref={divRef} />;
 ### `GaugeChart.jsx`
 
 - [ ] Props: `spamProb: number | null`, `label?: string`
-- [ ] Render Plotly `indicator` trace with `mode: 'gauge+number'`
+- [ ] Render semicircle gauge with D3 arc
 - [ ] Color: red when `spamProb >= 0.5`, green otherwise
 - [ ] Render empty/neutral state when `spamProb` is `null`
 
 ### `ScatterPlot.jsx`
 
 - [ ] Props: `pcaData: number[][]`, `labels: string[]`, `clusters: number[]`, `anomalies: boolean[]`, `rowIds: number[]`, `title?`
-- [ ] Render four traces:
+- [ ] Render three groups:
   - BENIGN points (green circle)
   - MALWARE points (red circle)
-  - Anomaly markers (black X overlay) for rows where `anomalies[i] === true`
-  - No cluster centre annotations required (keep it simple)
+  - Anomaly markers (✕ text) for rows where `anomalies[i] === true`
 - [ ] Tooltip shows row ID on hover
-- [ ] Supports Plotly native zoom and pan
+- [ ] Supports D3 zoom and pan
 
 ### `Heatmap.jsx`
 
 - [ ] Props: `matrix: number[][]`, `labels: string[]`, `title?`
-- [ ] Render Plotly `heatmap` trace
+- [ ] Render D3 scaleBand heatmap with colour scale
 - [ ] Annotate each cell with its count value
 - [ ] `labels` used for both x-axis (predicted) and y-axis (actual)
+
+### `DonutChart.jsx`
+
+- [ ] Props: `labels: string[]`, `values: number[]`, `title?`
+- [ ] D3 pie + arc, centre total, horizontal legend
+
+### `Histogram.jsx`
+
+- [ ] Props: `values: number[]`, `nbins?`, `color?`, `title?`
+- [ ] D3 bin, bar rects, gridlines
+
+### `RadarChart.jsx`
+
+- [ ] Props: `series: {name, values}[]`, `metrics: string[]`, `title?`, `rangeMin?`
+- [ ] Manual polygon grid rings + spokes + filled series polygons
