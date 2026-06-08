@@ -42,7 +42,7 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
     }
   }, [labels, values, colors, title, theme])
 
-  return <div ref={divRef} style={{ width: '100%', minHeight: '320px' }} />
+  return <div ref={divRef} style={{ width: '100%', minHeight: '400px' }} />
 }
 
 export default DonutChart
