@@ -55,7 +55,7 @@
 }
 
 .table tr:hover {
-  background: rgba(0, 212, 255, 0.04);
+  background: var(--hover-tint);
 }
 
 .empty {

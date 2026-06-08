@@ -18,7 +18,7 @@
 .textarea:focus { border-color: var(--accent); outline: none; }
 
 .primary {
-  background: var(--accent); color: #000; border: none; border-radius: 8px;
+  background: var(--accent); color: var(--btn-primary-text); border: none; border-radius: 8px;
   padding: 10px 20px; font-weight: 600; cursor: pointer; transition: background 0.2s;
   margin-top: 12px; width: 100%;
 }
@@ -30,7 +30,7 @@
   border-radius: 8px; padding: 9px 20px; font-weight: 600; cursor: pointer;
   margin-top: 8px; width: 100%;
 }
-.secondary:hover { background: rgba(0,212,255,0.1); }
+.secondary:hover { background: var(--hover-tint); }
 .secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Enhancement 3 — sample preset buttons */

@@ -10,7 +10,7 @@
 }
 
 .button:hover {
-  background: rgba(0, 212, 255, 0.1);
+  background: var(--hover-tint);
 }
 
 .button:disabled {

@@ -18,6 +18,9 @@
   --table-head:    #13162b;
   --navbar-text:        #e8eaf0;
   --navbar-text-muted:  #8892a4;
+  --hover-tint:    rgba(0, 212, 255, 0.06);
+  --accent-tint:   rgba(0, 212, 255, 0.15);
+  --btn-primary-text: #000;
 }
 
 /* Light theme — deep blue palette with a dark navy navbar for a polished look. */
@@ -37,9 +40,12 @@
   --text-muted:    #3e5575;
   --border:        #aec8e4;
   --shadow:        0 4px 24px rgba(8, 24, 60, 0.18);
-  --table-head:    #d8eaf8;
+  --table-head:    #cfe0f5;
   --navbar-text:        #f0f6ff;
   --navbar-text-muted:  rgba(220, 240, 255, 0.65);
+  --hover-tint:    rgba(0, 102, 204, 0.07);
+  --accent-tint:   rgba(0, 102, 204, 0.12);
+  --btn-primary-text: #fff;
 }
 
 /* ── Global entry animations (referenced by module CSS files) ───────────── */

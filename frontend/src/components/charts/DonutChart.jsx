@@ -25,7 +25,7 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
           colors: colors ?? DEFAULT_COLORS.slice(0, labels.length),
           line: { color: base.plot_bgcolor, width: 2 },
         },
-        textfont: { color: '#ffffff' },
+        textfont: { color: theme === 'light' ? '#111827' : '#ffffff' },
         hovertemplate: '%{label}: %{value} (%{percent})<extra></extra>',
       },
     ]

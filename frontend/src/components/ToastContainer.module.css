@@ -41,7 +41,7 @@
 }
 .success .icon { background: rgba(0, 204, 136, 0.18); color: var(--success); }
 .error .icon   { background: rgba(255, 77, 77, 0.18); color: var(--danger); }
-.info .icon    { background: rgba(0, 212, 255, 0.18); color: var(--accent); }
+.info .icon    { background: var(--accent-tint); color: var(--accent); }
 
 .message { flex: 1; line-height: 1.4; }
 
