@@ -6,7 +6,8 @@ import { useTheme } from '../../context/ThemeContext'
 // PCA 2-D scatter.
 //   pcaData: [[x, y], ...], labels: [], clusters: [], anomalies: [bool], rowIds: []
 function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [], rowIds = [], title = 'PCA Projection' }) {
-  const containerRef = useRef(null)
+  const containerRef  = useRef(null)
+  const zoomTransform = useRef(d3.zoomIdentity)   // persist zoom across redraws
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -18,8 +19,9 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
 
       const { bg, text, muted, border } = getThemeColors()
       const W  = container.clientWidth || 600
-      const H  = 400
-      const m  = { top: 44, right: 30, bottom: 60, left: 60 }
+      // Extra bottom margin so legend and PC1 axis label have clear separation
+      const H  = 420
+      const m  = { top: 44, right: 30, bottom: 78, left: 60 }
       const iW = W - m.left - m.right
       const iH = H - m.top  - m.bottom
 
@@ -28,6 +30,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         .attr('width', '100%').attr('height', H)
         .attr('viewBox', `0 0 ${W} ${H}`)
         .style('background', bg)
+        .style('cursor', 'grab')
 
       if (!pcaData.length) {
         svg.append('text').attr('x', W / 2).attr('y', H / 2)
@@ -60,13 +63,19 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      // Grid
+      // Clip path keeps dots inside the chart area during zoom/pan
+      const clipId = 'sc-clip'
+      svg.append('defs').append('clipPath').attr('id', clipId)
+        .append('rect').attr('width', iW).attr('height', iH)
+
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
+
+      // Grid
       g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
         .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
 
-      g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x).ticks(6)).call(axisStyle)
-      g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
+      const xAxisG = g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x).ticks(6)).call(axisStyle)
+      const yAxisG = g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
 
       // Tooltip
       const tip = d3.select(container)
@@ -78,8 +87,11 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         .style('border', `1px solid ${muted}`).style('z-index', '20')
         .style('white-space', 'nowrap')
 
+      // Clipped group — dots stay inside axes during zoom/pan
+      const chartArea = g.append('g').attr('clip-path', `url(#${clipId})`)
+
       const mkTip = function (event, d) {
-        d3.select(this).attr('r', d.isAnomaly ? 8 : 7)
+        d3.select(this).attr('r', 7)
         const r = container.getBoundingClientRect()
         tip.style('visibility', 'visible')
           .html(`Row ${d.rowId} | ${d.label} | Cluster ${d.cluster}`)
@@ -87,13 +99,13 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
            .style('left', `${event.clientX - r.left + 12}px`)
       }
       const hideTip = function (_, d) {
-        d3.select(this).attr('r', d.isAnomaly ? 6 : 5)
+        d3.select(this).attr('r', 5)
         tip.style('visibility', 'hidden')
       }
 
-      const dotProps = (pts, col, r) =>
-        g.selectAll(null).data(pts).join('circle')
-          .attr('cx', d => x(d.x)).attr('cy', d => y(d.y)).attr('r', r)
+      const addDots = (pts, col) =>
+        chartArea.selectAll(null).data(pts).join('circle')
+          .attr('cx', d => x(d.x)).attr('cy', d => y(d.y)).attr('r', 5)
           .attr('fill', col).attr('opacity', 0.8)
           .attr('stroke', bg).attr('stroke-width', 1)
           .style('cursor', 'crosshair')
@@ -105,11 +117,11 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
           })
           .on('mouseout', hideTip)
 
-      dotProps(benignNormal,  COLORS.success, 5)
-      dotProps(malwareNormal, COLORS.danger,  5)
+      addDots(benignNormal,  COLORS.success)
+      addDots(malwareNormal, COLORS.danger)
 
       // Anomaly ✕ markers
-      g.selectAll('.anomaly').data(anomalyPoints).join('text')
+      chartArea.selectAll('.anomaly').data(anomalyPoints).join('text')
         .attr('class', 'anomaly')
         .attr('x', d => x(d.x)).attr('y', d => y(d.y))
         .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
@@ -134,20 +146,20 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
       svg.append('text').attr('x', W / 2).attr('y', 22).attr('text-anchor', 'middle')
         .style('font-size', '14px').style('fill', text).text(title)
 
-      // Axis labels
+      // Axis labels — PC1 at the very bottom, legend clearly above it
       svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 8)
         .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('PC1')
       svg.append('text')
         .attr('transform', `translate(14,${m.top + iH / 2}) rotate(-90)`)
         .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('PC2')
 
-      // Legend
+      // Legend — 22px gap above PC1 axis label
       const legend = [
         { c: COLORS.success, label: 'Benign',  shape: 'circle' },
         { c: COLORS.danger,  label: 'Malware', shape: 'circle' },
         { c: COLORS.warning, label: 'Anomaly', shape: 'x' },
       ]
-      const legendY = H - 14
+      const legendY = H - 30   // was H-14; now 22px clear of PC1 label at H-8
       const itemW   = 80
       const startX  = m.left + iW / 2 - (legend.length * itemW) / 2
 
@@ -162,6 +174,64 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         svg.append('text').attr('x', lx + 14).attr('y', legendY)
           .style('font-size', '11px').style('fill', text).text(label)
       })
+
+      // ── Zoom & pan ───────────────────────────────────────────────────────────
+      // Applied to the SVG so wheel/drag work anywhere; dots keep their own hover events.
+      // Double-click resets to original view.
+      const zoomBehavior = d3.zoom()
+        .scaleExtent([0.5, 30])
+        .extent([[m.left, m.top], [m.left + iW, m.top + iH]])
+        .on('zoom', event => {
+          zoomTransform.current = event.transform
+          const newX = event.transform.rescaleX(x)
+          const newY = event.transform.rescaleY(y)
+          xAxisG.call(d3.axisBottom(newX).ticks(6)).call(axisStyle)
+          yAxisG.call(d3.axisLeft(newY).ticks(5)).call(axisStyle)
+          chartArea.selectAll('circle').attr('cx', d => newX(d.x)).attr('cy', d => newY(d.y))
+          chartArea.selectAll('.anomaly').attr('x', d => newX(d.x)).attr('y', d => newY(d.y))
+        })
+
+      svg.call(zoomBehavior)
+        .call(zoomBehavior.transform, zoomTransform.current)
+        .on('dblclick.zoom', () => {
+          zoomTransform.current = d3.zoomIdentity
+          svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity)
+        })
+
+      // ── Toolbar (reset + download) ───────────────────────────────────────────
+      const toolbar = d3.select(container)
+        .append('div')
+        .style('position', 'absolute').style('top', '8px').style('right', '8px')
+        .style('display', 'flex').style('gap', '4px').style('z-index', '10')
+
+      const btnStyle = btn => btn
+        .style('background', bg).style('color', muted)
+        .style('border', `1px solid ${border}`)
+        .style('border-radius', '4px').style('padding', '3px 8px')
+        .style('font-size', '11px').style('cursor', 'pointer').style('line-height', '1.4')
+
+      // Reset zoom button
+      btnStyle(toolbar.append('button').text('⟳ Reset'))
+        .on('click', () => {
+          zoomTransform.current = d3.zoomIdentity
+          svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity)
+        })
+
+      // Download SVG button
+      btnStyle(toolbar.append('button').text('⬇ Save'))
+        .on('click', () => {
+          const svgNode = container.querySelector('svg')
+          const serialized = new XMLSerializer().serializeToString(svgNode)
+          const blob = new Blob([serialized], { type: 'image/svg+xml' })
+          const url  = URL.createObjectURL(blob)
+          const a    = document.createElement('a')
+          a.download = `${title}.svg`
+          a.href     = url
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        })
     }
 
     draw()
@@ -169,7 +239,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
     return () => window.removeEventListener('resize', draw)
   }, [pcaData, labels, clusters, anomalies, rowIds, title, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
+  return <div ref={containerRef} style={{ width: '100%', minHeight: '420px', position: 'relative' }} />
 }
 
 export default ScatterPlot
