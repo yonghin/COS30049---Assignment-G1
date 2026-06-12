@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
+import { addToolbar } from './chartToolbar'
 
 const DEFAULT_COLORS = [COLORS.success, COLORS.danger, COLORS.warning, COLORS.accent, COLORS.purple]
 
@@ -114,6 +115,9 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
         item.append('text').attr('x', 17).attr('y', 11)
           .style('font-size', '12px').style('fill', text).text(lbl)
       })
+
+      // Save-only toolbar (no zoom/pan — donut is already self-explanatory)
+      addToolbar(container, { title, hasPanZoom: false })
     }
 
     draw()

@@ -2,12 +2,14 @@ import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
+import { addToolbar } from './chartToolbar'
 
 const PALETTE = [COLORS.accent, COLORS.purple, COLORS.success, COLORS.warning, COLORS.danger]
 
 function RadarChart({ series = [], metrics = [], title = 'Model Comparison', rangeMin = 0 }) {
-  const containerRef = useRef(null)
-  const hiddenRef    = useRef(new Set())   // persists toggle state across redraws
+  const containerRef  = useRef(null)
+  const hiddenRef     = useRef(new Set())      // persists legend toggle state
+  const zoomTransform = useRef(d3.zoomIdentity)
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -23,15 +25,14 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
       if (!N || !series.length) return
 
       // Legend layout — multi-row so long names aren't truncated
-      const ITEM_W   = 135   // px per legend item (enough for "Logistic Regression")
+      const ITEM_W   = 135
       const PER_ROW  = Math.max(1, Math.min(series.length, Math.floor(W / ITEM_W)))
       const LEG_ROWS = Math.ceil(series.length / PER_ROW)
       const LEG_H    = LEG_ROWS * 22 + 8
 
-      const H      = 400 + Math.max(0, (LEG_ROWS - 1) * 22)
+      const H       = 400 + Math.max(0, (LEG_ROWS - 1) * 22)
       const legTopY = H - LEG_H + 6
 
-      // Centre chart above legend — offset down extra to keep top spoke label clear of title
       const cx     = W / 2
       const cy     = (H - LEG_H) / 2 + 30
       const radius = Math.min(W * 0.44 - 30, (H - LEG_H - 84) / 2)
@@ -42,9 +43,17 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
         .attr('viewBox', `0 0 ${W} ${H}`)
         .style('background', bg)
 
-      const angle    = i => -Math.PI / 2 + (2 * Math.PI / N) * i
-      const rScale   = d3.scaleLinear().domain([rangeMin, 1]).range([0, radius])
-      const toPoly   = pts => pts.map(p => p.join(',')).join(' ')
+      // Clip keeps radar body inside the space between title and legend
+      svg.append('defs').append('clipPath').attr('id', 'rad-clip')
+        .append('rect').attr('y', 30).attr('width', W).attr('height', H - 30 - LEG_H)
+
+      // contentG holds the entire radar body (rings, spokes, labels, polygons, dots).
+      // Only this group gets the zoom transform — title and legend stay fixed.
+      const contentG = svg.append('g').attr('clip-path', 'url(#rad-clip)')
+
+      const angle  = i => -Math.PI / 2 + (2 * Math.PI / N) * i
+      const rScale = d3.scaleLinear().domain([rangeMin, 1]).range([0, radius])
+      const toPoly = pts => pts.map(p => p.join(',')).join(' ')
 
       // ── Grid rings ────────────────────────────────────────────────────────
       const levels = 4
@@ -55,11 +64,11 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
           cx + r * Math.cos(angle(i)),
           cy + r * Math.sin(angle(i)),
         ])
-        svg.append('polygon')
+        contentG.append('polygon')
           .attr('points', toPoly(pts))
           .attr('fill', 'none').attr('stroke', border).attr('stroke-width', 0.8)
 
-        svg.append('text')
+        contentG.append('text')
           .attr('x', cx + r * Math.cos(angle(0)) + 4)
           .attr('y', cy + r * Math.sin(angle(0)))
           .attr('dominant-baseline', 'middle')
@@ -69,14 +78,14 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
 
       // ── Spokes + axis labels ─────────────────────────────────────────────
       Array.from({ length: N }, (_, i) => {
-        svg.append('line')
+        contentG.append('line')
           .attr('x1', cx).attr('y1', cy)
           .attr('x2', cx + radius * Math.cos(angle(i)))
           .attr('y2', cy + radius * Math.sin(angle(i)))
           .attr('stroke', border).attr('stroke-width', 0.8)
 
         const labelR = radius * 1.2
-        svg.append('text')
+        contentG.append('text')
           .attr('x', cx + labelR * Math.cos(angle(i)))
           .attr('y', cy + labelR * Math.sin(angle(i)))
           .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
@@ -105,7 +114,7 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
           return [cx + rScale(v) * Math.cos(angle(i)), cy + rScale(v) * Math.sin(angle(i))]
         })
 
-        svg.append('polygon')
+        contentG.append('polygon')
           .attr('id', `radar-poly-${si}`)
           .attr('points', toPoly(pts))
           .attr('fill', col).attr('fill-opacity', 0.15)
@@ -129,7 +138,7 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
           })
 
         pts.forEach(([px, py]) => {
-          svg.append('circle')
+          contentG.append('circle')
             .attr('class', `radar-dot-${si}`)
             .attr('cx', px).attr('cy', py).attr('r', 4)
             .attr('fill', col).attr('stroke', bg).attr('stroke-width', 1)
@@ -137,19 +146,19 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
         })
       })
 
-      // ── Title ─────────────────────────────────────────────────────────────
+      // ── Title — fixed in svg (not inside contentG) ────────────────────────
       svg.append('text').attr('x', W / 2).attr('y', 20).attr('text-anchor', 'middle')
         .style('font-size', '14px').style('fill', text).text(title)
 
-      // ── Clickable legend ──────────────────────────────────────────────────
+      // ── Clickable legend — fixed in svg ───────────────────────────────────
       series.forEach((s, i) => {
-        const col          = s.color ?? PALETTE[i % PALETTE.length]
-        const row          = Math.floor(i / PER_ROW)
-        const colIdx       = i % PER_ROW
-        const itemsInRow   = Math.min(PER_ROW, series.length - row * PER_ROW)
-        const rowStartX    = (W - itemsInRow * ITEM_W) / 2
-        const lx           = rowStartX + colIdx * ITEM_W
-        const ly           = legTopY + row * 22
+        const col        = s.color ?? PALETTE[i % PALETTE.length]
+        const row        = Math.floor(i / PER_ROW)
+        const colIdx     = i % PER_ROW
+        const itemsInRow = Math.min(PER_ROW, series.length - row * PER_ROW)
+        const rowStartX  = (W - itemsInRow * ITEM_W) / 2
+        const lx         = rowStartX + colIdx * ITEM_W
+        const ly         = legTopY + row * 22
 
         const legendG = svg.append('g')
           .style('cursor', 'pointer')
@@ -163,6 +172,7 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
           .style('font-size', '11px').style('fill', text)
           .text(s.name)
 
+        // svg.select searches all descendants including contentG children
         legendG.on('click', function () {
           const hidden = hiddenRef.current
           if (hidden.has(i)) hidden.delete(i)
@@ -172,6 +182,23 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
           svg.selectAll(`.radar-dot-${i}`).attr('visibility', nowHidden ? 'hidden' : 'visible')
           d3.select(this).attr('opacity', nowHidden ? 0.4 : 1)
         })
+      })
+
+      // Content-only zoom: radar body zooms, title and legend stay fixed
+      const zoomBehavior = d3.zoom()
+        .filter(e => e.type !== 'wheel')
+        .scaleExtent([0.5, 5])
+        .on('zoom', event => {
+          zoomTransform.current = event.transform
+          contentG.attr('transform', event.transform.toString())
+        })
+
+      svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
+
+      addToolbar(container, {
+        svgSel: svg, zoomBehavior,
+        onReset: () => { zoomTransform.current = d3.zoomIdentity },
+        title,
       })
     }
 

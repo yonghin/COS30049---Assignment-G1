@@ -2,10 +2,12 @@ import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
+import { addToolbar } from './chartToolbar'
 
 // Confusion matrix heatmap. matrix = [[TN, FP], [FN, TP]], labels e.g. ['Ham','Spam'].
 function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
-  const containerRef = useRef(null)
+  const containerRef  = useRef(null)
+  const zoomTransform = useRef(d3.zoomIdentity)
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -35,6 +37,10 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         return
       }
 
+      // Clip path keeps cells inside chart area during content-only zoom
+      svg.append('defs').append('clipPath').attr('id', 'hm-clip')
+        .append('rect').attr('width', iW).attr('height', iH)
+
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
       // Axes: predicted on x, actual on y (reversed so TN is top-left)
@@ -47,7 +53,6 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
       const allVals = matrix.flat()
       const maxVal  = d3.max(allVals) || 1
 
-      // Multi-stop colour scale
       const colorScale = d3.scaleLinear()
         .domain([0, maxVal * 0.35, maxVal * 0.65, maxVal])
         .range([bg, '#4a3aaa', '#0077b6', '#00cc88'])
@@ -62,7 +67,6 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         .style('border', `1px solid ${muted}`).style('z-index', '20')
         .style('white-space', 'nowrap')
 
-      // Build flat data for each cell
       const cells = []
       matrix.forEach((row, ri) => {
         row.forEach((val, ci) => {
@@ -70,7 +74,19 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         })
       })
 
-      g.selectAll('rect').data(cells).join('rect')
+      // Axes first (stay fixed in g — not part of contentG)
+      const axisStyle = ax => {
+        ax.select('.domain').attr('stroke', border)
+        ax.selectAll('.tick line').attr('stroke', border)
+        ax.selectAll('.tick text').style('fill', muted)
+      }
+      g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x)).call(axisStyle)
+      g.append('g').call(d3.axisLeft(y)).call(axisStyle)
+
+      // contentG: only cells + numbers zoom; axes, axis labels, title stay fixed
+      const contentG = g.append('g').attr('clip-path', 'url(#hm-clip)')
+
+      contentG.selectAll('rect').data(cells).join('rect')
         .attr('x', d => x(d.predicted))
         .attr('y', d => y(d.actual))
         .attr('width',  x.bandwidth())
@@ -90,9 +106,8 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         })
         .on('mouseout', function () { d3.select(this).attr('opacity', 1); tip.style('visibility', 'hidden') })
 
-      // Cell value labels
       const cellTextColor = theme === 'light' ? '#111827' : '#e8eaf0'
-      g.selectAll('.cell-label').data(cells).join('text')
+      contentG.selectAll('.cell-label').data(cells).join('text')
         .attr('class', 'cell-label')
         .attr('x', d => (x(d.predicted) ?? 0) + x.bandwidth() / 2)
         .attr('y', d => (y(d.actual)    ?? 0) + y.bandwidth() / 2)
@@ -100,26 +115,31 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         .style('font-size', '16px').style('font-weight', '700').style('fill', cellTextColor)
         .text(d => d.value)
 
-      // Axes
-      const axisStyle = ax => {
-        ax.select('.domain').attr('stroke', border)
-        ax.selectAll('.tick line').attr('stroke', border)
-        ax.selectAll('.tick text').style('fill', muted)
-      }
-
-      g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x)).call(axisStyle)
-      g.append('g').call(d3.axisLeft(y)).call(axisStyle)
-
-      // Axis labels
+      // Axis labels + title — fixed in svg
       svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 8)
         .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('Predicted')
       svg.append('text')
         .attr('transform', `translate(14,${m.top + iH / 2}) rotate(-90)`)
         .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('Actual')
-
-      // Title
       svg.append('text').attr('x', W / 2).attr('y', 22).attr('text-anchor', 'middle')
         .style('font-size', '14px').style('fill', text).text(title)
+
+      // Content-only zoom: only cells + numbers move; axes and labels stay fixed
+      const zoomBehavior = d3.zoom()
+        .filter(e => e.type !== 'wheel')
+        .scaleExtent([0.5, 10])
+        .on('zoom', event => {
+          zoomTransform.current = event.transform
+          contentG.attr('transform', event.transform.toString())
+        })
+
+      svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
+
+      addToolbar(container, {
+        svgSel: svg, zoomBehavior,
+        onReset: () => { zoomTransform.current = d3.zoomIdentity },
+        title,
+      })
     }
 
     draw()

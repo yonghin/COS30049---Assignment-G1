@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
+import { addToolbar } from './chartToolbar'
 
 // Dual-purpose line chart:
 //  - Time series mode: pass `spamSeries` / `malwareSeries` ([{timestamp, count}])
@@ -127,14 +128,30 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             .style('font-size', '11px').style('fill', text).text(label)
         })
 
-        // Hover tooltip — crosshair bisector on ROC line
-        chartArea.append('rect')
+        // Content-only zoom: ROC line + diagonal zoom; axes, labels, legend stay fixed.
+        // rocZoomState is read by the tooltip rect to un-apply the zoom when bisecting.
+        let rocZoomState = zoomTransform.current
+        const rocZoom = d3.zoom()
+          .filter(e => e.type !== 'wheel')
+          .scaleExtent([0.5, 10])
+          .on('zoom', event => {
+            zoomTransform.current = event.transform
+            rocZoomState = event.transform
+            chartArea.attr('transform', event.transform.toString())
+          })
+
+        svg.call(rocZoom).call(rocZoom.transform, zoomTransform.current)
+
+        // Tooltip overlay in g (fixed position) — converts cursor coords using current zoom state
+        g.append('rect')
           .attr('width', iW).attr('height', iH)
           .attr('fill', 'none').attr('pointer-events', 'all')
           .style('cursor', 'crosshair')
           .on('mousemove', function (event) {
             const [mx] = d3.pointer(event)
-            const x0  = x.invert(mx)
+            // Un-apply the zoom transform to get the content-coordinate x
+            const contentX = (mx - rocZoomState.x) / rocZoomState.k
+            const x0  = x.invert(contentX)
             const idx = Math.max(0, Math.min(fpr.length - 1, d3.bisectLeft(fpr, x0)))
             tip.style('visibility', 'visible')
               .html(`FPR: <strong>${fpr[idx].toFixed(4)}</strong><br>TPR: <strong>${tpr[idx].toFixed(4)}</strong>`)
@@ -143,6 +160,12 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
                .style('left', `${event.clientX - r.left + 12}px`)
           })
           .on('mouseleave', () => tip.style('visibility', 'hidden'))
+
+        addToolbar(container, {
+          svgSel: svg, zoomBehavior: rocZoom,
+          onReset: () => { zoomTransform.current = d3.zoomIdentity },
+          title: title ?? `ROC Curve (AUC = ${auc != null ? auc.toFixed(4) : 'N/A'})`,
+        })
 
       } else {
         // ── Time series ───────────────────────────────────────────────────────
@@ -234,7 +257,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
         mkDots(malwareData, 'malware-dot', COLORS.danger, x, 'malware')
 
         // Axis labels — x label placed above the clickable legend
-        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 46)
+        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 32)
           .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted)
           .text('Time (MYT)')
         svg.append('text')
@@ -271,10 +294,11 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
           })
         })
 
-        // Zoom behaviour (preserve state across live refreshes)
+        // Zoom behaviour — scroll wheel disabled; use toolbar buttons
+        // scaleExtent minimum < 1 so zoom-out is allowed
         const zoomBehavior = d3.zoom()
-          .scaleExtent([1, 50])
-          .translateExtent([[0, 0], [iW, iH]])
+          .filter(e => e.type !== 'wheel')
+          .scaleExtent([0.2, 50])
           .extent([[0, 0], [iW, iH]])
           .on('zoom', event => {
             zoomTransform.current = event.transform
@@ -287,14 +311,13 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             chartArea.selectAll('.malware-dot').attr('cx', d => newX(d.date))
           })
 
-        // Overlay rect: captures both zoom gestures and hover-tooltip events
-        svg.append('rect')
+        // Overlay rect: zoom + hover-tooltip events
+        const overlay = svg.append('rect')
           .attr('transform', `translate(${m.left},${m.top})`)
           .attr('width', iW).attr('height', iH)
           .attr('fill', 'none').attr('pointer-events', 'all')
           .call(zoomBehavior)
           .call(zoomBehavior.transform, zoomTransform.current)
-          // .tip namespace keeps this separate from zoom's own mouse listeners
           .on('mousemove.tip', function (event) {
             const [mx]  = d3.pointer(event)
             const xVal  = currentX.invert(mx)
@@ -317,6 +340,12 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             }
           })
           .on('mouseleave.tip', () => tip.style('visibility', 'hidden'))
+
+        addToolbar(container, {
+          svgSel: overlay, zoomBehavior,
+          onReset: () => { zoomTransform.current = d3.zoomIdentity },
+          title: title ?? 'Live Predictions',
+        })
       }
     }
 

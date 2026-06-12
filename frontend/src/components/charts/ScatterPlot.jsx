@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
+import { addToolbar } from './chartToolbar'
 
 // PCA 2-D scatter.
 //   pcaData: [[x, y], ...], labels: [], clusters: [], anomalies: [bool], rowIds: []
@@ -63,10 +64,10 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      // Clip path keeps dots inside the chart area during zoom/pan
+      // Clip path — extend 6 px on every side so edge dots aren't half-clipped
       const clipId = 'sc-clip'
       svg.append('defs').append('clipPath').attr('id', clipId)
-        .append('rect').attr('width', iW).attr('height', iH)
+        .append('rect').attr('x', -6).attr('y', -6).attr('width', iW + 12).attr('height', iH + 12)
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
@@ -175,10 +176,9 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
           .style('font-size', '11px').style('fill', text).text(label)
       })
 
-      // ── Zoom & pan ───────────────────────────────────────────────────────────
-      // Applied to the SVG so wheel/drag work anywhere; dots keep their own hover events.
-      // Double-click resets to original view.
+      // ── Zoom & pan (buttons only — scroll wheel disabled) ────────────────────
       const zoomBehavior = d3.zoom()
+        .filter(e => e.type !== 'wheel')
         .scaleExtent([0.5, 30])
         .extent([[m.left, m.top], [m.left + iW, m.top + iH]])
         .on('zoom', event => {
@@ -191,47 +191,14 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
           chartArea.selectAll('.anomaly').attr('x', d => newX(d.x)).attr('y', d => newY(d.y))
         })
 
-      svg.call(zoomBehavior)
-        .call(zoomBehavior.transform, zoomTransform.current)
-        .on('dblclick.zoom', () => {
-          zoomTransform.current = d3.zoomIdentity
-          svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity)
-        })
+      svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
 
-      // ── Toolbar (reset + download) ───────────────────────────────────────────
-      const toolbar = d3.select(container)
-        .append('div')
-        .style('position', 'absolute').style('top', '8px').style('right', '8px')
-        .style('display', 'flex').style('gap', '4px').style('z-index', '10')
-
-      const btnStyle = btn => btn
-        .style('background', bg).style('color', muted)
-        .style('border', `1px solid ${border}`)
-        .style('border-radius', '4px').style('padding', '3px 8px')
-        .style('font-size', '11px').style('cursor', 'pointer').style('line-height', '1.4')
-
-      // Reset zoom button
-      btnStyle(toolbar.append('button').text('⟳ Reset'))
-        .on('click', () => {
-          zoomTransform.current = d3.zoomIdentity
-          svg.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity)
-        })
-
-      // Download SVG button
-      btnStyle(toolbar.append('button').text('⬇ Save'))
-        .on('click', () => {
-          const svgNode = container.querySelector('svg')
-          const serialized = new XMLSerializer().serializeToString(svgNode)
-          const blob = new Blob([serialized], { type: 'image/svg+xml' })
-          const url  = URL.createObjectURL(blob)
-          const a    = document.createElement('a')
-          a.download = `${title}.svg`
-          a.href     = url
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        })
+      addToolbar(container, {
+        svgSel: svg,
+        zoomBehavior,
+        onReset: () => { zoomTransform.current = d3.zoomIdentity },
+        title,
+      })
     }
 
     draw()
