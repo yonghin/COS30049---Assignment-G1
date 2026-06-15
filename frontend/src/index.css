@@ -30,7 +30,7 @@
   --bg-primary:    #d8e8f8;
   --bg-card:       #eaf3ff;
   --bg-input:      #dbeaf8;
-  --bg-navbar:     #0f2a50;
+  --bg-navbar:     #cfe0f5;
   --accent:        #0066cc;
   --accent-dim:    #004fa8;
   --purple:        #5b54e6;
@@ -43,8 +43,8 @@
   --shadow:        0 4px 24px rgba(8, 24, 60, 0.18);
   --table-head:      #cfe0f5;
   --table-head-text: #3e5575;
-  --navbar-text:        #f0f6ff;
-  --navbar-text-muted:  rgba(220, 240, 255, 0.65);
+  --navbar-text:        #0c1a30;
+  --navbar-text-muted:  #3e5575;
   --hover-tint:    rgba(0, 102, 204, 0.07);
   --accent-tint:   rgba(0, 102, 204, 0.12);
   --btn-primary-text: #fff;
