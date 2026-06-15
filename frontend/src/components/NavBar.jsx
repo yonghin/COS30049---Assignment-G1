@@ -35,7 +35,10 @@ function NavBar() {
   return (
     <nav className={styles.navbar} ref={menuRef}>
       <div className={styles.left}>
-        <Link to="/dashboard" className={styles.logo}>NTCyber AI</Link>
+        <Link to="/dashboard" className={styles.logo}>
+          <img src="/NTCyber_AI_Logo.png" alt="" className={styles.logoImg} />
+          NTCyber AI
+        </Link>
         <div className={styles.links}>
           {LINKS.map((l) => (
             <Link

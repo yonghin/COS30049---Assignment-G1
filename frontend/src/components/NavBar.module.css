@@ -20,6 +20,9 @@
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--navbar-text);
   font-weight: 700;
   font-size: 18px;
@@ -27,6 +30,13 @@
   text-decoration: none;
 }
 .logo:hover { color: var(--navbar-text); }
+
+.logoImg {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 
 .links {
   display: flex;
