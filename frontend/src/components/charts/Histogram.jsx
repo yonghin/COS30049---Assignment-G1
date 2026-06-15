@@ -74,7 +74,8 @@ function Histogram({
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      const xOrig = d3.scaleLinear().domain(d3.extent(values)).range([0, iW]).nice()
+      // Domain always starts at 0 — negative values never shown
+      const xOrig = d3.scaleLinear().domain([0, d3.max(values) || 1]).range([0, iW])
       const bins  = d3.bin().domain(xOrig.domain()).thresholds(nbins)(values)
       const yOrig = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([iH, 0]).nice()
 
@@ -124,7 +125,9 @@ function Histogram({
       // Zoom: X-axis only — bars and x tick labels rescale together, Y stays fixed
       const zoomBehavior = d3.zoom()
         .filter(e => e.type !== 'wheel')
-        .scaleExtent([0.5, 10])
+        .scaleExtent([1, 10])
+        // translateExtent x0=0 enforces t.x >= 0 so data x=0 never drifts left of the y-axis
+        .translateExtent([[0, 0], [Infinity, Infinity]])
         .on('zoom', event => {
           zoomTransform.current = event.transform
           const newX = event.transform.rescaleX(xOrig)

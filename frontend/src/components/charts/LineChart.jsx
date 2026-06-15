@@ -75,29 +75,31 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
 
       if (isRoc) {
         // ── ROC curve ─────────────────────────────────────────────────────────
-        const x = d3.scaleLinear().domain([0, 1]).range([0, iW])
-        const y = d3.scaleLinear().domain([0, 1.02]).range([iH, 0])
+        const xOrig = d3.scaleLinear().domain([0, 1]).range([0, iW])
+        const yOrig = d3.scaleLinear().domain([0, 1.02]).range([iH, 0])
 
-        // Gridlines
-        g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
+        // Gridlines — saved reference so tick positions update when Y rescales on zoom
+        const gridG = g.append('g')
+          .call(d3.axisLeft(yOrig).ticks(5).tickSize(-iW).tickFormat(''))
           .call(ax => {
             ax.select('.domain').remove()
             ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3')
           })
 
-        g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x).ticks(6)).call(axisStyle)
-        g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
+        const xAxisG = g.append('g').attr('transform', `translate(0,${iH})`)
+          .call(d3.axisBottom(xOrig).ticks(6)).call(axisStyle)
+        const yAxisG = g.append('g').call(d3.axisLeft(yOrig).ticks(5)).call(axisStyle)
 
         // Diagonal reference
-        chartArea.append('line')
-          .attr('x1', x(0)).attr('y1', y(0)).attr('x2', x(1)).attr('y2', y(1))
+        const diagLine = chartArea.append('line')
+          .attr('x1', xOrig(0)).attr('y1', yOrig(0)).attr('x2', xOrig(1)).attr('y2', yOrig(1))
           .attr('stroke', COLORS.muted).attr('stroke-width', 1).attr('stroke-dasharray', '5,5')
 
         // ROC line
-        const lineGen = d3.line().x((_, i) => x(fpr[i])).y((_, i) => y(tpr[i]))
-        chartArea.append('path')
+        const mkLineGen = (xSc, ySc) => d3.line().x((_, i) => xSc(fpr[i])).y((_, i) => ySc(tpr[i]))
+        const rocPath = chartArea.append('path')
           .datum(tpr)
-          .attr('d', lineGen)
+          .attr('d', mkLineGen(xOrig, yOrig))
           .attr('fill', 'none')
           .attr('stroke', color ?? COLORS.accent)
           .attr('stroke-width', 2.5)
@@ -128,30 +130,45 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             .style('font-size', '11px').style('fill', text).text(label)
         })
 
-        // Content-only zoom: ROC line + diagonal zoom; axes, labels, legend stay fixed.
-        // rocZoomState is read by the tooltip rect to un-apply the zoom when bisecting.
-        let rocZoomState = zoomTransform.current
+        // Track current rescaled x for tooltip bisector
+        let currentX = xOrig
+
+        // Zoom: rescale both axes; chart cannot pan outside [0,1]×[0,1.02]
         const rocZoom = d3.zoom()
           .filter(e => e.type !== 'wheel')
           .scaleExtent([0.5, 10])
+          .extent([[0, 0], [iW, iH]])
+          .translateExtent([[0, 0], [iW, iH]])
           .on('zoom', event => {
             zoomTransform.current = event.transform
-            rocZoomState = event.transform
-            chartArea.attr('transform', event.transform.toString())
+            const newX = event.transform.rescaleX(xOrig)
+            const newY = event.transform.rescaleY(yOrig)
+            currentX = newX
+
+            xAxisG.call(d3.axisBottom(newX).ticks(6)).call(axisStyle)
+            yAxisG.call(d3.axisLeft(newY).ticks(5)).call(axisStyle)
+            gridG.call(d3.axisLeft(newY).ticks(5).tickSize(-iW).tickFormat(''))
+              .call(ax => {
+                ax.select('.domain').remove()
+                ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3')
+              })
+
+            rocPath.attr('d', mkLineGen(newX, newY)(tpr))
+            diagLine
+              .attr('x1', newX(0)).attr('y1', newY(0))
+              .attr('x2', newX(1)).attr('y2', newY(1))
           })
 
         svg.call(rocZoom).call(rocZoom.transform, zoomTransform.current)
 
-        // Tooltip overlay in g (fixed position) — converts cursor coords using current zoom state
+        // Tooltip overlay — d3.pointer gives coords in g's local space
         g.append('rect')
           .attr('width', iW).attr('height', iH)
           .attr('fill', 'none').attr('pointer-events', 'all')
           .style('cursor', 'crosshair')
           .on('mousemove', function (event) {
             const [mx] = d3.pointer(event)
-            // Un-apply the zoom transform to get the content-coordinate x
-            const contentX = (mx - rocZoomState.x) / rocZoomState.k
-            const x0  = x.invert(contentX)
+            const x0  = currentX.invert(mx)
             const idx = Math.max(0, Math.min(fpr.length - 1, d3.bisectLeft(fpr, x0)))
             tip.style('visibility', 'visible')
               .html(`FPR: <strong>${fpr[idx].toFixed(4)}</strong><br>TPR: <strong>${tpr[idx].toFixed(4)}</strong>`)

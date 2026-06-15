@@ -44,9 +44,9 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
       defs.append('clipPath').attr('id', `bar-clip-${cid}`)
         .append('rect').attr('width', iW).attr('height', iH)
 
-      // Clip for x-axis labels — in xAxisG's local coordinate system (axis line is y=0, labels at y≈9)
+      // Clip for x-axis labels — x=-20 lets the "0" tick label (centered at pixel 0) render fully
       defs.append('clipPath').attr('id', `xaxis-label-clip-${cid}`)
-        .append('rect').attr('x', 0).attr('y', -2).attr('width', iW).attr('height', m.bottom + 4)
+        .append('rect').attr('x', -20).attr('y', -2).attr('width', iW + 20).attr('height', m.bottom + 4)
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
@@ -89,6 +89,7 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
         drawGrid(xOrig)
 
         const xAxisG = g.append('g').attr('transform', `translate(0,${iH})`)
+          .attr('clip-path', `url(#xaxis-label-clip-${cid})`)
           .call(d3.axisBottom(xOrig).ticks(5)).call(axisStyle)
 
         g.append('g').call(d3.axisLeft(y)).call(axisStyle)
@@ -113,19 +114,17 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
           })
           .on('mouseout', function () { d3.select(this).attr('opacity', 1); tip.style('visibility', 'hidden') })
 
-        // Zoom rescales x-axis values; bars update to match
+        // Zoom: rescaleX with translateExtent — drag right to pan, blocked from going left past x=0
         const zoomBehavior = d3.zoom()
           .filter(e => e.type !== 'wheel')
-          .scaleExtent([0.5, 10])
+          .scaleExtent([1, 10])
+          .translateExtent([[0, 0], [Infinity, Infinity]])
           .on('zoom', event => {
             zoomTransform.current = event.transform
             const newX = event.transform.rescaleX(xOrig)
             xAxisG.call(d3.axisBottom(newX).ticks(5)).call(axisStyle)
             drawGrid(newX)
-            // Bars always start at the axis (value 0); width = newX(value) - newX(0), clamped
-            const x0 = newX(0)
-            bars.attr('x', Math.max(0, x0))
-                .attr('width', d => Math.max(0, newX(d) - x0))
+            bars.attr('width', d => Math.max(0, newX(d)))
           })
 
         svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
