@@ -85,3 +85,17 @@
   .chartsRow { grid-template-columns: 1fr; }
   .statsGrid { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 640px) {
+  .page { padding: 12px; }
+  .card { padding: 16px; }
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .tab  { white-space: nowrap; padding: 10px 14px; font-size: 13px; }
+  .batchControls { flex-direction: column; }
+  .batchControls .select  { width: 100%; }
+  .batchControls .primary { width: 100%; margin-top: 0; }
+  .compareTable { font-size: 12px; }
+  .compareTable th,
+  .compareTable td { padding: 8px 8px; }
+  .statsGrid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}

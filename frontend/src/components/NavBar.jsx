@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import styles from './NavBar.module.css'
@@ -13,8 +14,26 @@ const LINKS = [
 function NavBar() {
   const { pathname } = useLocation()
   const { theme, toggleTheme } = useTheme()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
+  // Close menu on route change
+  useEffect(() => { setMenuOpen(false) }, [pathname])
+
   return (
-    <nav className={styles.navbar}>
+    <nav className={styles.navbar} ref={menuRef}>
       <div className={styles.left}>
         <span className={styles.logo}>NTCyber AI</span>
         <div className={styles.links}>
@@ -29,6 +48,7 @@ function NavBar() {
           ))}
         </div>
       </div>
+
       <div className={styles.right}>
         <button
           className={styles.themeToggle}
@@ -38,7 +58,34 @@ function NavBar() {
         >
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
+
+        <button
+          className={`${styles.burger} ${menuOpen ? styles.burgerOpen : ''}`}
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Toggle navigation menu"
+          aria-expanded={menuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {menuOpen && (
+        <div className={styles.mobileMenu}>
+          {LINKS.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className={pathname === l.to ? `${styles.mobileLink} ${styles.mobileLinkActive}` : styles.mobileLink}
+              onClick={() => setMenuOpen(false)}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </nav>
   )
 }

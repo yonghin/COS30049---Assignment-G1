@@ -84,3 +84,10 @@ a:hover { color: var(--accent-dim); }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Responsive base ───────────────────────────────────────────────────────── */
+img, svg, video { max-width: 100%; }
+
+@media (max-width: 640px) {
+  body { font-size: 13px; }
+}

@@ -113,3 +113,18 @@
   .chartsRow { grid-template-columns: 1fr; }
   .heroTitle { font-size: 44px; }
 }
+
+@media (max-width: 640px) {
+  .heroTitle   { font-size: 32px; }
+  .heroTagline { font-size: 16px; }
+  .heroBlurb   { font-size: 14px; }
+  .body        { padding: 12px; }
+  .kpiGrid     { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .modelGrid   { grid-template-columns: 1fr; }
+  .chartsRow   { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 400px) {
+  .heroTitle { font-size: 26px; }
+  .kpiGrid   { grid-template-columns: 1fr; }
+}

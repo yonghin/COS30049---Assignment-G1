@@ -69,3 +69,16 @@
   .kpiGrid { grid-template-columns: 1fr; }
   .row { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 640px) {
+  .page { padding: 12px; }
+  .kpiGrid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .kpiCard { padding: 14px; }
+  .kpiValue { font-size: 24px; }
+  .actions { flex-direction: column; }
+  .actions > * { width: 100%; text-align: center; }
+}
+
+@media (max-width: 400px) {
+  .kpiGrid { grid-template-columns: 1fr; }
+}

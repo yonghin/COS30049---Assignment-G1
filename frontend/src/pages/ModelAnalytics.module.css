@@ -26,3 +26,12 @@
   .topRow { grid-template-columns: 1fr; }
   .metricCards { grid-template-columns: repeat(2, 1fr); }
 }
+
+@media (max-width: 640px) {
+  .page  { padding: 12px; }
+  .card  { padding: 16px; }
+  .tabs  { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .tab   { white-space: nowrap; padding: 10px 14px; font-size: 13px; }
+  .metricCards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .metricValue { font-size: 20px; }
+}
