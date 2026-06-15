@@ -16,9 +16,9 @@ import { recordPrediction } from '../utils/historyStore'
 import styles from './SpamDetector.module.css'
 
 const MODELS = [
-  { value: 'rf_spam', label: modelLabel('rf_spam') },
   { value: 'nb_spam', label: modelLabel('nb_spam') },
   { value: 'logistic_regression_spam', label: modelLabel('logistic_regression_spam') },
+  { value: 'rf_spam', label: modelLabel('rf_spam') },
 ]
 
 // Enhancement 3 — hardcoded frontend sample presets (no backend change).
@@ -50,14 +50,14 @@ function SpamDetector() {
 
   // Single
   const [text, setText] = useState('')
-  const [model, setModel] = useState('rf_spam')
+  const [model, setModel] = useState('nb_spam')
   const [result, setResult] = useState(null)
   const [analyzed, setAnalyzed] = useState('')
   const [compare, setCompare] = useState(null)
   const [comparing, setComparing] = useState(false)
 
   // Batch
-  const [batchModel, setBatchModel] = useState('rf_spam')
+  const [batchModel, setBatchModel] = useState('nb_spam')
   const [file, setFile] = useState(null)
   const [fileLabel, setFileLabel] = useState(null)
   const [batch, setBatch] = useState(null)

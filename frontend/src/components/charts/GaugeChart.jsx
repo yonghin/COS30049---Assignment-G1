@@ -2,12 +2,10 @@ import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
-import { addToolbar } from './chartToolbar'
 
 // Semicircle gauge: flat side at bottom, 0 at 9-o'clock, 100 at 3-o'clock.
 function GaugeChart({ spamProb = null, label }) {
-  const containerRef  = useRef(null)
-  const zoomTransform = useRef(d3.zoomIdentity)
+  const containerRef = useRef(null)
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -17,7 +15,7 @@ function GaugeChart({ spamProb = null, label }) {
     const draw = () => {
       d3.select(container).selectAll('*').remove()
 
-      const { bg, text, muted, border } = getThemeColors()
+      const { bg, muted, border } = getThemeColors()
       const W  = container.clientWidth || 400
       const H  = 300
       const cx = W / 2
@@ -30,19 +28,10 @@ function GaugeChart({ spamProb = null, label }) {
         .attr('viewBox', `0 0 ${W} ${H}`)
         .style('background', bg)
 
-      // Clip keeps gauge inside the SVG during content-only zoom
-      svg.append('defs').append('clipPath').attr('id', 'gauge-clip')
-        .append('rect').attr('width', W).attr('height', H)
-
-      // contentG is the only thing that gets the zoom transform.
-      // Since the gauge has no separate fixed title/axes, the whole body zooms together.
-      const contentG = svg.append('g').attr('clip-path', 'url(#gauge-clip)')
-
       const val      = spamProb ?? 0
       const barColor = val >= 0.5 ? COLORS.danger : COLORS.success
       const valuePct = Math.round(val * 100)
 
-      // Angle scale: 0 → -π/2 (9-o'clock), 100 → π/2 (3-o'clock)
       const startAngle = -Math.PI / 2
       const endAngle   =  Math.PI / 2
       const aScale = d3.scaleLinear().domain([0, 100]).range([startAngle, endAngle])
@@ -50,7 +39,7 @@ function GaugeChart({ spamProb = null, label }) {
       const mkArc = (r0, r1, a0, a1) =>
         d3.arc().innerRadius(r0).outerRadius(r1).startAngle(a0).endAngle(a1)()
 
-      const g = contentG.append('g').attr('transform', `translate(${cx},${cy})`)
+      const g = svg.append('g').attr('transform', `translate(${cx},${cy})`)
 
       // Track
       g.append('path').attr('d', mkArc(radius * 0.6, radius, startAngle, endAngle))
@@ -99,23 +88,6 @@ function GaugeChart({ spamProb = null, label }) {
       g.append('text').attr('text-anchor', 'middle').attr('y', 28)
         .style('font-size', '13px').style('fill', muted)
         .text(label ?? 'Spam Probability')
-
-      // Content-only zoom — the whole gauge body zooms together
-      const zoomBehavior = d3.zoom()
-        .filter(e => e.type !== 'wheel')
-        .scaleExtent([0.5, 5])
-        .on('zoom', event => {
-          zoomTransform.current = event.transform
-          contentG.attr('transform', event.transform.toString())
-        })
-
-      svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
-
-      addToolbar(container, {
-        svgSel: svg, zoomBehavior,
-        onReset: () => { zoomTransform.current = d3.zoomIdentity },
-        title: label ?? 'Gauge',
-      })
     }
 
     draw()

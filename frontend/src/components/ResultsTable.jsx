@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import styles from './ResultsTable.module.css'
 
 function formatCell(value) {
@@ -11,25 +11,28 @@ function formatCell(value) {
 //   searchable (default true)  — text box filtering across all cells
 //   sortable   (default true)  — click headers to sort asc/desc
 //   filterColumn               — column key to expose a category dropdown for
+//   pageSize                   — number of rows per page (omit = no pagination)
 function ResultsTable({
   columns,
   rows,
   searchable = true,
   sortable = true,
   filterColumn,
+  pageSize,
 }) {
   const cols = columns ?? (rows && rows.length > 0 ? Object.keys(rows[0]) : [])
 
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: null, dir: 'asc' })
   const [filterValue, setFilterValue] = useState('all')
+  const [page, setPage] = useState(1)
 
   const filterOptions = useMemo(() => {
     if (!filterColumn || !rows) return []
     return Array.from(new Set(rows.map((r) => r[filterColumn]))).filter((v) => v !== undefined)
   }, [filterColumn, rows])
 
-  const view = useMemo(() => {
+  const filtered = useMemo(() => {
     let data = rows ?? []
 
     if (filterColumn && filterValue !== 'all') {
@@ -55,6 +58,12 @@ function ResultsTable({
 
     return data
   }, [rows, cols, query, sort, searchable, sortable, filterColumn, filterValue])
+
+  // Reset to page 1 when filters/search change
+  useEffect(() => { setPage(1) }, [query, filterValue, sort])
+
+  const totalPages = pageSize ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1
+  const view = pageSize ? filtered.slice((page - 1) * pageSize, page * pageSize) : filtered
 
   if (!rows || rows.length === 0) {
     return <div className={styles.empty}>No data to display.</div>
@@ -94,7 +103,7 @@ function ResultsTable({
               ))}
             </select>
           )}
-          <span className={styles.count}>{view.length} of {rows.length}</span>
+          <span className={styles.count}>{filtered.length} of {rows.length}</span>
         </div>
       )}
 
@@ -126,6 +135,34 @@ function ResultsTable({
         </table>
         {view.length === 0 && <div className={styles.empty}>No rows match your filters.</div>}
       </div>
+
+      {pageSize && totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageBtn}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            &#8249;
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+              onClick={() => setPage(p)}
+            >
+              {p}
+            </button>
+          ))}
+          <button
+            className={styles.pageBtn}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            &#8250;
+          </button>
+        </div>
+      )}
     </div>
   )
 }

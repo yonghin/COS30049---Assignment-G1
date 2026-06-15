@@ -121,6 +121,7 @@ function ModelAnalytics() {
                   metrics={metrics.metrics}
                   series={[{ name: tab.label, values: metrics.values, color: tab.color }]}
                   title={`${tab.label} — metric profile`}
+                  rangeMin={0.7}
                 />
               </div>
             )}

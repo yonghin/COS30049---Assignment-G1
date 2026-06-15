@@ -123,6 +123,7 @@ function History() {
                 columns={['time', 'kind', 'model', 'label', 'confidence', 'summary']}
                 rows={rows}
                 filterColumn="kind"
+                pageSize={10}
               />
             </div>
           </div>
