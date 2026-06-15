@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom'
 import styles from './Footer.module.css'
 
-const APP_VERSION = 'v2.0'
-
 function Footer() {
   return (
     <footer className={styles.footer}>
@@ -20,7 +18,6 @@ function Footer() {
         </nav>
         <div className={styles.meta}>
           <span>COS30049 · Group 1</span>
-          <span className={styles.version}>{APP_VERSION}</span>
         </div>
       </div>
     </footer>
