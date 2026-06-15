@@ -42,7 +42,12 @@ function History() {
   const rows = useMemo(
     () =>
       items.map((i) => ({
-        time: new Date(i.ts).toLocaleString(),
+        time: new Date(i.ts).toLocaleString('en-MY', {
+          timeZone: 'Asia/Kuala_Lumpur',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: false,
+        }),
         kind: i.kind,
         model: modelLabel(i.model),
         label: i.label,

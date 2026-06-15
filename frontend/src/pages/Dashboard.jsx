@@ -97,12 +97,13 @@ function Dashboard() {
   const fmtMYT = (ts) => new Date(ts).toLocaleString('en-MY', {
     timeZone: 'Asia/Kuala_Lumpur',
     year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
   })
 
   const activityRows = [
-    ...spamSeries.map((p) => ({ _ts: p.timestamp, timestamp: fmtMYT(p.timestamp), task: 'spam', count: p.count })),
-    ...malwareSeries.map((p) => ({ _ts: p.timestamp, timestamp: fmtMYT(p.timestamp), task: 'malware', count: p.count })),
+    ...spamSeries.map((p) => ({ _ts: p.timestamp, time: fmtMYT(p.timestamp), task: 'spam', count: p.count })),
+    ...malwareSeries.map((p) => ({ _ts: p.timestamp, time: fmtMYT(p.timestamp), task: 'malware', count: p.count })),
   ]
     .sort((a, b) => (a._ts > b._ts ? -1 : 1))
     .slice(0, 10)
@@ -218,7 +219,7 @@ function Dashboard() {
         <div className={styles.card}>
           <h3 className={styles.sectionTitle}>Recent Activity</h3>
           <ResultsTable
-            columns={['timestamp', 'task', 'count']}
+            columns={['time', 'task', 'count']}
             rows={activityRows}
             filterColumn="task"
           />

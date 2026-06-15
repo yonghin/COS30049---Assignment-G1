@@ -15,7 +15,8 @@
   --text-muted:    #8892a4;
   --border:        #2a2d3e;
   --shadow:        0 4px 24px rgba(0, 0, 0, 0.4);
-  --table-head:    #13162b;
+  --table-head:      #1f1c38;
+  --table-head-text: #9896b8;
   --navbar-text:        #e8eaf0;
   --navbar-text-muted:  #8892a4;
   --hover-tint:    rgba(0, 212, 255, 0.06);
@@ -40,7 +41,8 @@
   --text-muted:    #3e5575;
   --border:        #aec8e4;
   --shadow:        0 4px 24px rgba(8, 24, 60, 0.18);
-  --table-head:    #cfe0f5;
+  --table-head:      #cfe0f5;
+  --table-head-text: #3e5575;
   --navbar-text:        #f0f6ff;
   --navbar-text-muted:  rgba(220, 240, 255, 0.65);
   --hover-tint:    rgba(0, 102, 204, 0.07);
