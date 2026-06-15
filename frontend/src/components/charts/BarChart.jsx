@@ -6,9 +6,13 @@ import { addToolbar } from './chartToolbar'
 
 const H_PALETTE = [COLORS.accent, COLORS.purple, COLORS.success, COLORS.warning, COLORS.danger]
 
+let _chartCounter = 0
+
 function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', horizontal = false, categories, values }) {
   const containerRef  = useRef(null)
   const zoomTransform = useRef(d3.zoomIdentity)
+  const hiddenRef     = useRef(new Set())
+  const chartId       = useRef(`bc${++_chartCounter}`)
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -33,9 +37,16 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
         .attr('viewBox', `0 0 ${W} ${H}`)
         .style('background', bg)
 
-      // Clip path keeps bars inside chart area during content-only zoom
-      svg.append('defs').append('clipPath').attr('id', 'bar-clip')
+      const defs = svg.append('defs')
+      const cid  = chartId.current
+
+      // Clip for bars — in g's coordinate system: (0,0) to (iW, iH)
+      defs.append('clipPath').attr('id', `bar-clip-${cid}`)
         .append('rect').attr('width', iW).attr('height', iH)
+
+      // Clip for x-axis labels — in xAxisG's local coordinate system (axis line is y=0, labels at y≈9)
+      defs.append('clipPath').attr('id', `xaxis-label-clip-${cid}`)
+        .append('rect').attr('x', 0).attr('y', -2).attr('width', iW).attr('height', m.bottom + 4)
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
@@ -54,31 +65,40 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      // contentG is the only thing that gets the zoom transform —
-      // axes, tick labels, title, and legend all stay fixed.
-      let contentG
-
       if (horizontal) {
-        const cats = categories ?? []
-        const vals = values ?? []
+        // ── Horizontal bar chart (feature importance / category scores) ──────
+        const cats  = categories ?? []
+        const vals  = values ?? []
 
-        const y = d3.scaleBand().domain(cats).range([0, iH]).padding(0.25)
-        const x = d3.scaleLinear().domain([0, d3.max(vals) || 1]).range([0, iW]).nice()
+        const y     = d3.scaleBand().domain(cats).range([0, iH]).padding(0.25)
+        const xOrig = d3.scaleLinear().domain([0, d3.max(vals) || 1]).range([0, iW]).nice()
 
-        // Grid + axes — stay fixed in g
-        g.append('g')
-          .call(d3.axisBottom(x).ticks(5).tickSize(iH).tickFormat(''))
-          .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
-        g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x).ticks(5)).call(axisStyle)
+        // Grid + clipped bars
+        const contentG = g.append('g').attr('clip-path', `url(#bar-clip-${cid})`)
+        const gridG    = contentG.append('g')
+
+        const drawGrid = (xScale) => {
+          gridG.selectAll('*').remove()
+          xScale.ticks(5).forEach(tick => {
+            gridG.append('line')
+              .attr('x1', xScale(tick)).attr('y1', 0)
+              .attr('x2', xScale(tick)).attr('y2', iH)
+              .attr('stroke', border).attr('stroke-dasharray', '3,3').attr('stroke-width', 0.8)
+          })
+        }
+        drawGrid(xOrig)
+
+        const xAxisG = g.append('g').attr('transform', `translate(0,${iH})`)
+          .call(d3.axisBottom(xOrig).ticks(5)).call(axisStyle)
+
         g.append('g').call(d3.axisLeft(y)).call(axisStyle)
 
-        // Bars in contentG (zooms independently of axes)
-        contentG = g.append('g').attr('clip-path', 'url(#bar-clip)')
-        contentG.selectAll('rect').data(vals).join('rect')
+        const bars = contentG.selectAll('rect.hbar').data(vals).join('rect')
+          .attr('class', 'hbar')
           .attr('y', (_, i) => y(cats[i]))
           .attr('x', 0)
           .attr('height', y.bandwidth())
-          .attr('width', d => x(d))
+          .attr('width', d => xOrig(d))
           .attr('fill', (_, i) => H_PALETTE[i % H_PALETTE.length])
           .attr('rx', 3)
           .style('cursor', 'pointer')
@@ -93,45 +113,89 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
           })
           .on('mouseout', function () { d3.select(this).attr('opacity', 1); tip.style('visibility', 'hidden') })
 
+        // Zoom rescales x-axis values; bars update to match
+        const zoomBehavior = d3.zoom()
+          .filter(e => e.type !== 'wheel')
+          .scaleExtent([0.5, 10])
+          .on('zoom', event => {
+            zoomTransform.current = event.transform
+            const newX = event.transform.rescaleX(xOrig)
+            xAxisG.call(d3.axisBottom(newX).ticks(5)).call(axisStyle)
+            drawGrid(newX)
+            // Bars always start at the axis (value 0); width = newX(value) - newX(0), clamped
+            const x0 = newX(0)
+            bars.attr('x', Math.max(0, x0))
+                .attr('width', d => Math.max(0, newX(d) - x0))
+          })
+
+        svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
+
+        addToolbar(container, {
+          svgSel: svg, zoomBehavior,
+          onReset: () => { zoomTransform.current = d3.zoomIdentity },
+          title,
+        })
+
       } else {
-        const mdls = models ?? []
-        const acc  = accuracy ?? []
-        const f1s  = f1 ?? []
-        const aucs = auc ?? []
+        // ── Vertical grouped bar chart ────────────────────────────────────────
+        const hidden       = hiddenRef.current
+        const mdls         = models ?? []
+        const acc          = accuracy ?? []
+        const f1s          = f1 ?? []
+        const aucs         = auc ?? []
         const metrics      = ['Accuracy', 'F1 Score', 'AUC']
         const metricColors = [COLORS.accent, COLORS.purple, COLORS.success]
 
-        const xGroup = d3.scaleBand().domain(mdls).range([0, iW]).padding(0.3)
-        const xBar   = d3.scaleBand().domain(metrics).range([0, xGroup.bandwidth()]).padding(0.05)
-        const y      = d3.scaleLinear().domain([0, 1.05]).range([iH, 0])
-
-        // Grid + axes — stay fixed
-        g.append('g')
-          .call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
-          .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
-        g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(xGroup)).call(axisStyle)
-        g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
-
-        // Bars in contentG
-        contentG = g.append('g').attr('clip-path', 'url(#bar-clip)')
-
         const seriesData = [
-          { key: 'Accuracy', vals: acc },
-          { key: 'F1 Score', vals: f1s },
+          { key: 'Accuracy', vals: acc  },
+          { key: 'F1 Score', vals: f1s  },
           { key: 'AUC',      vals: aucs },
         ]
+
+        const xGroupOrig = d3.scaleBand().domain(mdls).range([0, iW]).padding(0.3)
+        const yOrig      = d3.scaleLinear().domain([0, 1.05]).range([iH, 0])
+        const mkXBar     = xG => d3.scaleBand().domain(metrics).range([0, xG.bandwidth()]).padding(0.05)
+
+        // Clipped content area for bars + grid
+        const contentG = g.append('g').attr('clip-path', `url(#bar-clip-${cid})`)
+        const gridG    = contentG.append('g')
+
+        const drawGrid = (yScale) => {
+          gridG.selectAll('*').remove()
+          yScale.ticks(5).forEach(tick => {
+            gridG.append('line')
+              .attr('x1', 0).attr('y1', yScale(tick))
+              .attr('x2', iW).attr('y2', yScale(tick))
+              .attr('stroke', border).attr('stroke-dasharray', '3,3').attr('stroke-width', 0.8)
+          })
+        }
+        drawGrid(yOrig)
+
+        // Axes — outside contentG (not clipped) but x-axis labels clipped to chart width
+        const xAxisG = g.append('g')
+          .attr('transform', `translate(0,${iH})`)
+          .attr('clip-path', `url(#xaxis-label-clip-${cid})`)
+          .call(d3.axisBottom(xGroupOrig)).call(axisStyle)
+
+        const yAxisG = g.append('g')
+          .call(d3.axisLeft(yOrig).ticks(5)).call(axisStyle)
+
+        // Draw bars
+        const xBarOrig = mkXBar(xGroupOrig)
         seriesData.forEach(({ key, vals }, si) => {
           contentG.selectAll(`.bar-${si}`)
             .data(vals).join('rect')
             .attr('class', `bar-${si}`)
-            .attr('x', (_, i) => (xGroup(mdls[i]) ?? 0) + (xBar(key) ?? 0))
-            .attr('y', d => y(d))
-            .attr('width', xBar.bandwidth())
-            .attr('height', d => iH - y(d))
+            .attr('x', (_, i) => (xGroupOrig(mdls[i]) ?? 0) + (xBarOrig(key) ?? 0))
+            .attr('y', d => yOrig(d))
+            .attr('width', xBarOrig.bandwidth())
+            .attr('height', d => Math.max(0, iH - yOrig(d)))
             .attr('fill', metricColors[si])
             .attr('rx', 2)
+            .attr('visibility', hidden.has(si) ? 'hidden' : 'visible')
             .style('cursor', 'pointer')
             .on('mouseover', function (event, d) {
+              if (hidden.has(si)) return
               d3.select(this).attr('opacity', 0.75)
               tip.style('visibility', 'visible').html(`${key}: <strong>${d.toFixed(4)}</strong>`)
             })
@@ -143,38 +207,69 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
             .on('mouseout', function () { d3.select(this).attr('opacity', 1); tip.style('visibility', 'hidden') })
         })
 
-        // Legend — fixed in svg (outside g)
+        // Zoom: X-axis only — bars spread wider, Y stays fixed so baseline never goes off-screen
+        const zoomBehavior = d3.zoom()
+          .filter(e => e.type !== 'wheel')
+          .scaleExtent([0.5, 10])
+          .on('zoom', event => {
+            zoomTransform.current = event.transform
+            const t = event.transform
+
+            // Only update X (band scale range shifts with pan/zoom)
+            const newXGroup = xGroupOrig.copy().range([t.applyX(0), t.applyX(iW)])
+            const newXBar   = mkXBar(newXGroup)
+
+            xAxisG.call(d3.axisBottom(newXGroup)).call(axisStyle)
+            // Y axis and grid stay fixed — no rescaleY
+
+            seriesData.forEach(({ key, vals }, si) => {
+              contentG.selectAll(`.bar-${si}`)
+                .attr('x', (_, i) => (newXGroup(mdls[i]) ?? 0) + (newXBar(key) ?? 0))
+                .attr('width', newXBar.bandwidth())
+                // y and height are unchanged (Y scale is fixed)
+            })
+          })
+
+        svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
+
+        // Clickable legend — click to toggle series on/off
         const legendY      = H - 16
         const legendStartX = m.left + iW / 2 - (metrics.length * 90) / 2
         metrics.forEach((key, i) => {
           const lx = legendStartX + i * 90
-          svg.append('rect').attr('x', lx).attr('y', legendY - 10).attr('width', 12).attr('height', 12)
+
+          const legendG = svg.append('g')
+            .style('cursor', 'pointer')
+            .attr('opacity', hidden.has(i) ? 0.4 : 1)
+
+          legendG.append('rect')
+            .attr('x', lx).attr('y', legendY - 10)
+            .attr('width', 12).attr('height', 12)
             .attr('fill', metricColors[i]).attr('rx', 2)
-          svg.append('text').attr('x', lx + 16).attr('y', legendY)
+
+          legendG.append('text')
+            .attr('x', lx + 16).attr('y', legendY)
             .style('font-size', '11px').style('fill', text).text(key)
+
+          legendG.on('click', function () {
+            if (hidden.has(i)) hidden.delete(i)
+            else hidden.add(i)
+            const isHidden = hidden.has(i)
+            contentG.selectAll(`.bar-${i}`).attr('visibility', isHidden ? 'hidden' : 'visible')
+            d3.select(this).attr('opacity', isHidden ? 0.4 : 1)
+          })
+        })
+
+        addToolbar(container, {
+          svgSel: svg, zoomBehavior,
+          onReset: () => { zoomTransform.current = d3.zoomIdentity },
+          title,
         })
       }
 
-      // Title — fixed in svg
+      // Title — always fixed at top
       svg.append('text').attr('x', W / 2).attr('y', 22).attr('text-anchor', 'middle')
         .style('font-size', '14px').style('fill', text).text(title)
-
-      // Content-only zoom: only bars move; axes, tick labels, title, legend stay fixed
-      const zoomBehavior = d3.zoom()
-        .filter(e => e.type !== 'wheel')
-        .scaleExtent([0.5, 10])
-        .on('zoom', event => {
-          zoomTransform.current = event.transform
-          contentG.attr('transform', event.transform.toString())
-        })
-
-      svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)
-
-      addToolbar(container, {
-        svgSel: svg, zoomBehavior,
-        onReset: () => { zoomTransform.current = d3.zoomIdentity },
-        title,
-      })
     }
 
     draw()

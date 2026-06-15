@@ -4,6 +4,8 @@ import { COLORS, getThemeColors } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
+let _histCounter = 0
+
 function Histogram({
   values = [],
   title  = 'Confidence Distribution',
@@ -13,6 +15,7 @@ function Histogram({
 }) {
   const containerRef  = useRef(null)
   const zoomTransform = useRef(d3.zoomIdentity)
+  const chartId       = useRef(`hist${++_histCounter}`)
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -23,6 +26,7 @@ function Histogram({
       d3.select(container).selectAll('*').remove()
 
       const { bg, text, muted, border } = getThemeColors()
+      const cid = chartId.current
       const W  = container.clientWidth || 500
       const H  = 400
       const m  = { top: 44, right: 30, bottom: 60, left: 60 }
@@ -43,9 +47,15 @@ function Histogram({
         return
       }
 
-      // Clip path keeps bars inside chart area during content-only zoom
-      svg.append('defs').append('clipPath').attr('id', 'hist-clip')
+      const defs = svg.append('defs')
+
+      // Clip bars to chart area
+      defs.append('clipPath').attr('id', `hist-clip-${cid}`)
         .append('rect').attr('width', iW).attr('height', iH)
+
+      // Clip x-axis labels (in xAxisG's local coordinate system: axis line is y=0)
+      defs.append('clipPath').attr('id', `hist-xclip-${cid}`)
+        .append('rect').attr('x', 0).attr('y', -2).attr('width', iW).attr('height', m.bottom + 4)
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
@@ -64,25 +74,30 @@ function Histogram({
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      const x    = d3.scaleLinear().domain(d3.extent(values)).range([0, iW]).nice()
-      const bins = d3.bin().domain(x.domain()).thresholds(nbins)(values)
-      const y    = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([iH, 0]).nice()
+      const xOrig = d3.scaleLinear().domain(d3.extent(values)).range([0, iW]).nice()
+      const bins  = d3.bin().domain(xOrig.domain()).thresholds(nbins)(values)
+      const yOrig = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([iH, 0]).nice()
 
-      // Grid + axes — stay fixed in g (not part of contentG)
+      // Fixed Y grid + left axis
       g.append('g')
-        .call(d3.axisLeft(y).ticks(5).tickSize(-iW).tickFormat(''))
+        .call(d3.axisLeft(yOrig).ticks(5).tickSize(-iW).tickFormat(''))
         .call(ax => { ax.select('.domain').remove(); ax.selectAll('.tick line').attr('stroke', border).attr('stroke-dasharray', '3,3') })
-      g.append('g').attr('transform', `translate(0,${iH})`).call(d3.axisBottom(x).ticks(6)).call(axisStyle)
-      g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
+      g.append('g').call(d3.axisLeft(yOrig).ticks(5)).call(axisStyle)
 
-      // contentG: only bars zoom; axes, axis labels, title stay fixed
-      const contentG = g.append('g').attr('clip-path', 'url(#hist-clip)')
+      // X axis — clips labels so they don't slide past the chart edges during pan
+      const xAxisG = g.append('g')
+        .attr('transform', `translate(0,${iH})`)
+        .attr('clip-path', `url(#hist-xclip-${cid})`)
+        .call(d3.axisBottom(xOrig).ticks(6)).call(axisStyle)
 
-      contentG.selectAll('rect').data(bins).join('rect')
-        .attr('x', d => x(d.x0) + 1)
-        .attr('y', d => y(d.length))
-        .attr('width',  d => Math.max(0, x(d.x1) - x(d.x0) - 2))
-        .attr('height', d => iH - y(d.length))
+      // Clipped content area for bars
+      const contentG = g.append('g').attr('clip-path', `url(#hist-clip-${cid})`)
+
+      const bars = contentG.selectAll('rect').data(bins).join('rect')
+        .attr('x', d => xOrig(d.x0) + 1)
+        .attr('y', d => yOrig(d.length))
+        .attr('width',  d => Math.max(0, xOrig(d.x1) - xOrig(d.x0) - 2))
+        .attr('height', d => iH - yOrig(d.length))
         .attr('fill', color).attr('opacity', 0.85)
         .style('cursor', 'pointer')
         .on('mouseover', function (event, d) {
@@ -97,7 +112,7 @@ function Histogram({
         })
         .on('mouseout', function () { d3.select(this).attr('opacity', 0.85); tip.style('visibility', 'hidden') })
 
-      // Title + axis labels — fixed in svg
+      // Title + axis labels
       svg.append('text').attr('x', W / 2).attr('y', 22).attr('text-anchor', 'middle')
         .style('font-size', '14px').style('fill', text).text(title)
       svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 8)
@@ -106,13 +121,20 @@ function Histogram({
         .attr('transform', `translate(14,${m.top + iH / 2}) rotate(-90)`)
         .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted).text('Count')
 
-      // Content-only zoom: only bars move; axes, tick labels, title stay fixed
+      // Zoom: X-axis only — bars and x tick labels rescale together, Y stays fixed
       const zoomBehavior = d3.zoom()
         .filter(e => e.type !== 'wheel')
         .scaleExtent([0.5, 10])
         .on('zoom', event => {
           zoomTransform.current = event.transform
-          contentG.attr('transform', event.transform.toString())
+          const newX = event.transform.rescaleX(xOrig)
+
+          xAxisG.call(d3.axisBottom(newX).ticks(6)).call(axisStyle)
+
+          bars
+            .attr('x', d => newX(d.x0) + 1)
+            .attr('width', d => Math.max(0, newX(d.x1) - newX(d.x0) - 2))
+            // y and height stay the same (Y fixed)
         })
 
       svg.call(zoomBehavior).call(zoomBehavior.transform, zoomTransform.current)

@@ -8,6 +8,7 @@ const DEFAULT_COLORS = [COLORS.success, COLORS.danger, COLORS.warning, COLORS.ac
 
 function DonutChart({ labels = [], values = [], colors, title = 'Class Distribution' }) {
   const containerRef = useRef(null)
+  const hiddenRef    = useRef(new Set())
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -18,6 +19,7 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
       d3.select(container).selectAll('*').remove()
 
       const { bg, text, muted } = getThemeColors()
+      const hidden      = hiddenRef.current
       const sliceColors = colors ?? DEFAULT_COLORS.slice(0, labels.length)
       const W = container.clientWidth || 400
       const H = 400
@@ -34,7 +36,6 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
       const cx = W / 2
       const cy = margin.top + radius
 
-      // Tooltip
       const tip = d3.select(container)
         .append('div')
         .style('position', 'absolute')
@@ -58,24 +59,29 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
         return
       }
 
-      const total = d3.sum(values)
-      const arc     = d3.arc().innerRadius(radius * 0.5).outerRadius(radius)
+      // Compute total ignoring hidden slices
+      const visibleTotal = values.reduce((s, v, i) => s + (hidden.has(i) ? 0 : v), 0)
+
+      const arc      = d3.arc().innerRadius(radius * 0.5).outerRadius(radius)
       const arcHover = d3.arc().innerRadius(radius * 0.5).outerRadius(radius * 1.06)
-      const pie = d3.pie().sort(null).value(d => d)
+      const pie      = d3.pie().sort(null).value(d => d)
 
       const g = svg.append('g').attr('transform', `translate(${cx}, ${cy})`)
 
       g.selectAll('path')
         .data(pie(values))
         .join('path')
+        .attr('id', (_, i) => `donut-slice-${i}`)
         .attr('d', arc)
         .attr('fill', (_, i) => sliceColors[i])
         .attr('stroke', bg)
         .attr('stroke-width', 2)
+        .attr('opacity', (_, i) => hidden.has(i) ? 0 : 1)
         .style('cursor', 'pointer')
         .on('mouseover', function (event, d) {
+          if (hidden.has(d.index)) return
           d3.select(this).transition().duration(120).attr('d', arcHover)
-          const pct = total > 0 ? ((d.data / total) * 100).toFixed(1) : '0.0'
+          const pct = visibleTotal > 0 ? ((d.data / visibleTotal) * 100).toFixed(1) : '0.0'
           tip.style('visibility', 'visible')
             .html(`<strong>${labels[d.index]}</strong>: ${d.data} (${pct}%)`)
         })
@@ -85,14 +91,15 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
              .style('left', `${event.clientX - r.left + 12}px`)
         })
         .on('mouseout', function (_, d) {
+          if (hidden.has(d.index)) return
           d3.select(this).transition().duration(120).attr('d', arc)
           tip.style('visibility', 'hidden')
         })
 
-      // Center total
-      g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.25em')
+      // Center total (visible only)
+      const totalText = g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.25em')
         .style('font-size', '22px').style('font-weight', '700').style('fill', text)
-        .text(total)
+        .text(visibleTotal)
       g.append('text').attr('text-anchor', 'middle').attr('dy', '1.2em')
         .style('font-size', '11px').style('fill', muted).text('total')
 
@@ -103,20 +110,40 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
         .style('font-size', '14px').style('fill', text)
         .text(title)
 
-      // Legend (horizontal, centred below the donut)
+      // Clickable legend
       const legendY = margin.top + radius * 2 + 22
       const itemW   = Math.min(110, (W - 40) / labels.length)
       const startX  = (W - itemW * labels.length) / 2
 
       const legend = svg.append('g').attr('transform', `translate(${startX}, ${legendY})`)
       labels.forEach((lbl, i) => {
-        const item = legend.append('g').attr('transform', `translate(${i * itemW}, 0)`)
+        const item = legend.append('g')
+          .attr('transform', `translate(${i * itemW}, 0)`)
+          .style('cursor', 'pointer')
+          .attr('opacity', hidden.has(i) ? 0.4 : 1)
+
         item.append('circle').attr('cx', 7).attr('cy', 7).attr('r', 6).attr('fill', sliceColors[i])
         item.append('text').attr('x', 17).attr('y', 11)
           .style('font-size', '12px').style('fill', text).text(lbl)
+
+        item.on('click', function () {
+          if (hidden.has(i)) hidden.delete(i)
+          else hidden.add(i)
+          const isHidden = hidden.has(i)
+
+          // Toggle slice visibility
+          g.select(`#donut-slice-${i}`)
+            .attr('opacity', isHidden ? 0 : 1)
+
+          // Update center total to reflect visible slices only
+          const newTotal = values.reduce((s, v, j) => s + (hidden.has(j) ? 0 : v), 0)
+          totalText.text(newTotal)
+
+          d3.select(this).attr('opacity', isHidden ? 0.4 : 1)
+        })
       })
 
-      // Save-only toolbar (no zoom/pan — donut is already self-explanatory)
+      // Save-only toolbar (no zoom/pan)
       addToolbar(container, { title, hasPanZoom: false })
     }
 
