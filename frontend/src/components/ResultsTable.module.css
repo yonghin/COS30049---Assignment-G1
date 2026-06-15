@@ -50,6 +50,28 @@
 .sortable:hover { color: var(--table-head-text); }
 .arrow { color: var(--accent); }
 
+.checkCol {
+  width: 36px;
+  padding: 12px 4px 12px 16px;
+}
+
+.checkCell {
+  width: 36px;
+  padding: 10px 4px 10px 16px;
+  vertical-align: middle;
+}
+
+.checkInput {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.rowSelected {
+  background: rgba(0, 212, 255, 0.06);
+}
+
 .table td {
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);

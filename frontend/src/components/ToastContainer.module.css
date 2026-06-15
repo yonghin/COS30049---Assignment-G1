@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 360px;
+  max-width: 380px;
 }
 
 .toast {
@@ -22,6 +22,11 @@
   color: var(--text-primary);
   font-size: 13px;
   animation: toastIn 0.25s ease-out;
+}
+
+.leaving {
+  animation: toastOut 0.3s ease-in forwards;
+  pointer-events: none;
 }
 
 .success { border-left-color: var(--success); }
@@ -45,6 +50,21 @@
 
 .message { flex: 1; line-height: 1.4; }
 
+.undoBtn {
+  background: none;
+  border: 1px solid currentColor;
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.undoBtn:hover { background: var(--accent-tint); }
+
 .close {
   background: none;
   border: none;
@@ -57,10 +77,15 @@
 .close:hover { color: var(--text-primary); }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateX(24px); }
+  from { opacity: 0; transform: translateX(40px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(110%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .toast { animation: none; }
+  .toast, .leaving { animation: none; }
 }

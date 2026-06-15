@@ -9,6 +9,7 @@ import LineChart from '../components/charts/LineChart'
 import RadarChart from '../components/charts/RadarChart'
 import DonutChart from '../components/charts/DonutChart'
 import { getModels, getHistory } from '../api/historyApi'
+import { getHistory as getLocalHistory, subscribe } from '../utils/historyStore'
 import { modelLabel } from '../constants/modelNames'
 import { useCountUp } from '../hooks/useCountUp'
 import styles from './Dashboard.module.css'
@@ -51,6 +52,7 @@ function Dashboard() {
   const [models, setModels] = useState([])
   const [spamSeries, setSpamSeries] = useState([])
   const [malwareSeries, setMalwareSeries] = useState([])
+  const [localHistory, setLocalHistory] = useState(() => getLocalHistory())
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const intervalRef = useRef(null)
@@ -91,6 +93,8 @@ function Dashboard() {
     }
   }, [])
 
+  useEffect(() => subscribe(setLocalHistory), [])
+
   const sumSpam = spamSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
   const sumMalware = malwareSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
 
@@ -101,13 +105,13 @@ function Dashboard() {
     hour12: false,
   })
 
-  const activityRows = [
-    ...spamSeries.map((p) => ({ _ts: p.timestamp, time: fmtMYT(p.timestamp), task: 'spam', count: p.count })),
-    ...malwareSeries.map((p) => ({ _ts: p.timestamp, time: fmtMYT(p.timestamp), task: 'malware', count: p.count })),
-  ]
-    .sort((a, b) => (a._ts > b._ts ? -1 : 1))
+  const activityRows = localHistory
     .slice(0, 10)
-    .map(({ _ts, ...row }) => row)
+    .map((i) => ({
+      time:  fmtMYT(i.ts),
+      task:  i.kind,
+      label: i.label ?? '—',
+    }))
 
   // Memoized chart props — prevent charts from re-rendering on every 5-second poll tick.
   const radarSeries = useMemo(
@@ -219,7 +223,7 @@ function Dashboard() {
         <div className={styles.card}>
           <h3 className={styles.sectionTitle}>Recent Activity</h3>
           <ResultsTable
-            columns={['time', 'task', 'count']}
+            columns={['time', 'task', 'label']}
             rows={activityRows}
             filterColumn="task"
           />

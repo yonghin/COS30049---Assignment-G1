@@ -18,7 +18,8 @@
 .tableCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
 
 .actions { display: flex; justify-content: flex-end; gap: 12px; }
-.clear {
+
+.deleteSelected {
   background: transparent;
   color: var(--danger);
   border: 1px solid var(--danger);
@@ -26,33 +27,79 @@
   padding: 8px 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, opacity 0.2s;
 }
-.clear:hover { background: rgba(255, 77, 77, 0.1); }
+.deleteSelected:hover:not(:disabled) { background: rgba(255, 77, 77, 0.1); }
+.deleteSelected:disabled { opacity: 0.35; cursor: default; }
 
-.undoBar {
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: rgba(255, 179, 71, 0.12);
-  border: 1px solid var(--warning);
-  border-radius: 10px;
-  padding: 12px 18px;
-  margin-bottom: 20px;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
 }
-.undoMsg { font-size: 13px; color: var(--warning); }
-.undoBtn {
-  background: var(--warning);
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 16px;
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  animation: fadeSlideUp 0.2s ease-out;
+}
+
+.modalTitle {
+  font-size: 16px;
   font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  color: var(--text-primary);
+  margin: 0 0 10px;
 }
-.undoBtn:hover { opacity: 0.85; }
+
+.modalBody {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0 0 22px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modalCancel {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.modalCancel:hover { background: var(--hover-tint); }
+
+.modalConfirm {
+  background: var(--danger);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.modalConfirm:hover { opacity: 0.85; }
+
 
 .emptyState {
   background: var(--bg-card);

@@ -42,6 +42,11 @@ export function recordPrediction(entry) {
   return record
 }
 
+export function deleteHistoryItems(ids) {
+  const idSet = new Set(ids)
+  write(read().filter((item) => !idSet.has(item.id)))
+}
+
 export function clearHistory() {
   write([])
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import styles from './ResultsTable.module.css'
 
 function formatCell(value) {
@@ -19,6 +19,10 @@ function ResultsTable({
   sortable = true,
   filterColumn,
   pageSize,
+  selectable = false,
+  selectedKeys,
+  keyField = '_id',
+  onSelectionChange,
 }) {
   const cols = columns ?? (rows && rows.length > 0 ? Object.keys(rows[0]) : [])
 
@@ -61,6 +65,35 @@ function ResultsTable({
 
   // Reset to page 1 when filters/search change
   useEffect(() => { setPage(1) }, [query, filterValue, sort])
+
+  // Selection helpers (only active when selectable=true)
+  const allFilteredKeys = useMemo(
+    () => (selectable ? filtered.map((r) => r[keyField]).filter(Boolean) : []),
+    [selectable, filtered, keyField]
+  )
+  const allSelected = selectable && allFilteredKeys.length > 0 && allFilteredKeys.every((k) => selectedKeys?.has(k))
+  const someSelected = selectable && !allSelected && allFilteredKeys.some((k) => selectedKeys?.has(k))
+
+  const selectAllRef = useRef(null)
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected
+  }, [someSelected])
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return
+    const next = new Set(selectedKeys)
+    if (allSelected) allFilteredKeys.forEach((k) => next.delete(k))
+    else allFilteredKeys.forEach((k) => next.add(k))
+    onSelectionChange(next)
+  }
+
+  const toggleRow = (key) => {
+    if (!onSelectionChange) return
+    const next = new Set(selectedKeys)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    onSelectionChange(next)
+  }
 
   const totalPages = pageSize ? Math.max(1, Math.ceil(filtered.length / pageSize)) : 1
   const view = pageSize ? filtered.slice((page - 1) * pageSize, page * pageSize) : filtered
@@ -111,6 +144,18 @@ function ResultsTable({
         <table className={styles.table}>
           <thead>
             <tr>
+              {selectable && (
+                <th className={styles.checkCol}>
+                  <input
+                    ref={selectAllRef}
+                    type="checkbox"
+                    className={styles.checkInput}
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </th>
+              )}
               {cols.map((c) => (
                 <th
                   key={c}
@@ -124,13 +169,28 @@ function ResultsTable({
             </tr>
           </thead>
           <tbody>
-            {view.map((row, i) => (
-              <tr key={i}>
-                {cols.map((c) => (
-                  <td key={c}>{formatCell(row[c])}</td>
-                ))}
-              </tr>
-            ))}
+            {view.map((row, i) => {
+              const rowKey = row[keyField]
+              const isChecked = selectable && selectedKeys?.has(rowKey)
+              return (
+                <tr key={i} className={isChecked ? styles.rowSelected : undefined}>
+                  {selectable && (
+                    <td className={styles.checkCell}>
+                      <input
+                        type="checkbox"
+                        className={styles.checkInput}
+                        checked={!!isChecked}
+                        onChange={() => toggleRow(rowKey)}
+                        aria-label="Select row"
+                      />
+                    </td>
+                  )}
+                  {cols.map((c) => (
+                    <td key={c}>{formatCell(row[c])}</td>
+                  ))}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
         {view.length === 0 && <div className={styles.empty}>No rows match your filters.</div>}
