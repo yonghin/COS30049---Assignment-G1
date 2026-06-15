@@ -206,26 +206,30 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
             .on('mouseout', function () { d3.select(this).attr('opacity', 1); tip.style('visibility', 'hidden') })
         })
 
-        // Zoom: X-axis only — bars spread wider, Y stays fixed so baseline never goes off-screen
+        // Zoom: X-axis only — bars spread wider, Y stays fixed so baseline never goes off-screen.
+        // translateExtent + extent are both set to the inner chart rect so D3 keeps bars
+        // within bounds and panning works symmetrically in both directions.
         const zoomBehavior = d3.zoom()
           .filter(e => e.type !== 'wheel')
-          .scaleExtent([0.5, 10])
+          .scaleExtent([1, 10])
+          .extent([[m.left, m.top], [m.left + iW, m.top + iH]])
+          .translateExtent([[m.left, m.top], [m.left + iW, m.top + iH]])
           .on('zoom', event => {
             zoomTransform.current = event.transform
             const t = event.transform
 
-            // Only update X (band scale range shifts with pan/zoom)
-            const newXGroup = xGroupOrig.copy().range([t.applyX(0), t.applyX(iW)])
+            // applyX works in SVG space; subtract m.left to convert to g-space range endpoints
+            const x0 = t.applyX(m.left) - m.left
+            const x1 = t.applyX(m.left + iW) - m.left
+            const newXGroup = xGroupOrig.copy().range([x0, x1])
             const newXBar   = mkXBar(newXGroup)
 
             xAxisG.call(d3.axisBottom(newXGroup)).call(axisStyle)
-            // Y axis and grid stay fixed — no rescaleY
 
             seriesData.forEach(({ key, vals }, si) => {
               contentG.selectAll(`.bar-${si}`)
                 .attr('x', (_, i) => (newXGroup(mdls[i]) ?? 0) + (newXBar(key) ?? 0))
                 .attr('width', newXBar.bandwidth())
-                // y and height are unchanged (Y scale is fixed)
             })
           })
 

@@ -184,10 +184,17 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
         })
       })
 
-      // Content-only zoom: radar body zooms, title and legend stay fixed
+      // Content-only zoom: radar body zooms, title and legend stay fixed.
+      // translateExtent is anchored to the radar content rect (center ± radius*1.3 covers
+      // polygon + axis labels) so D3 always keeps the viewport overlapping the content.
       const zoomBehavior = d3.zoom()
         .filter(e => e.type !== 'wheel')
-        .scaleExtent([0.5, 5])
+        .scaleExtent([1, 5])
+        .extent([[0, 30], [W, H - LEG_H]])
+        .translateExtent([
+          [cx - radius * 1.3, cy - radius * 1.3],
+          [cx + radius * 1.3, cy + radius * 1.3],
+        ])
         .on('zoom', event => {
           zoomTransform.current = event.transform
           contentG.attr('transform', event.transform.toString())
