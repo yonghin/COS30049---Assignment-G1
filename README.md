@@ -47,22 +47,22 @@ NTCyber AI is a two-part project:
 ## Architecture
 
 ```
-┌──────────────────────────┐         HTTP / JSON          ┌──────────────────────────────┐
-│   Frontend (React+Vite)  │  ───────────────────────────▶│   Backend (FastAPI, :8000)   │
-│   http://localhost:5173  │                              │                              │
-│                          │  ◀───────────────────────────│  lifespan startup:           │
-│  Pages:                  │                              │   • load 6 .pkl models       │
-│   • Dashboard            │                              │   • rebuild TF-IDF (500)     │
-│   • SpamDetector         │                              │   • precompute analytics     │
-│   • MalwareDetector      │                              │                              │
-│   • ModelAnalytics       │      app.state.registry  ───▶│  services: spam / malware /  │
-│  D3 charts               │      app.state.analytics     │            analytics         │
-│  Axios api/ clients      │                              │  routers:  /api/spam …       │
-└──────────────────────────┘                              └───────────────┬──────────────┘
+┌──────────────────────────┐         HTTP / JSON           ┌──────────────────────────────┐
+│   Frontend (React+Vite)  │  ───────────────────────────> │   Backend (FastAPI, :8000)   │
+│   http://localhost:5173  │                               │                              │
+│                          │  <─────────────────────────── │  lifespan startup:           │
+│  Pages:                  │                               │   • load 6 .pkl models       │
+│   • Dashboard            │                               │   • rebuild TF-IDF (500)     │
+│   • SpamDetector         │                               │   • precompute analytics     │
+│   • MalwareDetector      │                               │                              │
+│   • ModelAnalytics       │      app.state.registry  ───> │  services: spam / malware /  │
+│  D3 charts               │      app.state.analytics      │            analytics         │
+│  Axios api/ clients      │                               │  routers:  /api/spam …       │
+└──────────────────────────┘                               └───────────────┬──────────────┘
                                                                            │ reads (never writes)
-                                                            ┌──────────────▼──────────────┐
-                                                            │ outputs/models/*.pkl         │
-                                                            │ data/processed/*.csv         │
+                                                            ┌──────────────▼───────────────┐
+                                                            │ backend/outputs/models/*.pkl │
+                                                            │ backend/data/processed/*.csv │
                                                             └──────────────────────────────┘
 ```
 
@@ -120,13 +120,13 @@ COS30049---Assignment-G1/
 
 ## Tech Stack
 
-| Layer            | Technology (as built / verified)                                            |
-| ---------------- | --------------------------------------------------------------------------- |
-| ML runtime       | Python 3.13 · scikit-learn 1.8 · pandas 3.0 · numpy 2.4                      |
-| Backend          | FastAPI 0.136 · uvicorn · pydantic v2 · python-multipart                     |
-| Backend tests    | pytest · FastAPI `TestClient` (httpx)                                        |
-| Frontend         | React 19 · Vite 8 · React Router 7 · Axios · **D3.js v7** · CSS Modules           |
-| Frontend tests   | Vitest 4 · @testing-library/react · MSW (Mock Service Worker)               |
+| Layer          | Technology (as built / verified)                                        |
+| -------------- | ----------------------------------------------------------------------- |
+| ML runtime     | Python 3.13 · scikit-learn 1.8 · pandas 3.0 · numpy 2.4                 |
+| Backend        | FastAPI 0.136 · uvicorn · pydantic v2 · python-multipart                |
+| Backend tests  | pytest · FastAPI `TestClient` (httpx)                                   |
+| Frontend       | React 19 · Vite 8 · React Router 7 · Axios · **D3.js v7** · CSS Modules |
+| Frontend tests | Vitest 4 · @testing-library/react · MSW (Mock Service Worker)           |
 
 > **Note on versions.** The design prompt pinned older versions (sklearn 1.7.2, pandas 2.2,
 > React 18, etc.). The code runs against the newer versions actually installed on this machine.
@@ -173,7 +173,7 @@ Then open <http://localhost:5173>. The app redirects to the **Dashboard**.
 
 ## Backend (FastAPI)
 
-Run **from the project root** so the relative paths (`outputs/models/…`, `data/processed/…`) resolve:
+Run from the project root. The backend resolves model and dataset paths from its own location (backend/outputs/models/ and backend/data/processed/), so startup works regardless of the current working directory.
 
 ```powershell
 python -m uvicorn backend.main:app --reload
@@ -182,16 +182,16 @@ python -m uvicorn backend.main:app --reload
 ### API Endpoints
 
 | Method   | Path                                | Purpose                                                     |
-| -------- | ----------------------------------- | ---------------------------------------------------------- |
-| `POST`   | `/api/spam/predict`                 | Classify one message. Body: `{ text, model }`.             |
-| `POST`   | `/api/spam/predict/batch`           | Classify a `.txt`/`.csv` upload (`model` form field).      |
+| -------- | ----------------------------------- | ----------------------------------------------------------- |
+| `POST`   | `/api/spam/predict`                 | Classify one message. Body: `{ text, model }`.              |
+| `POST`   | `/api/spam/predict/batch`           | Classify a `.txt`/`.csv` upload (`model` form field).       |
 | `POST`   | `/api/malware/predict`              | Score a malware-feature CSV upload (SVM + KMeans + DBSCAN). |
-| `GET`    | `/api/malware/sample`               | 10 sample rows (label columns stripped) for the demo.      |
-| `GET`    | `/api/analytics/model/{model_name}` | Confusion matrix + ROC + feature importance for a model.   |
-| `GET`    | `/api/health`                       | Liveness + list of loaded models.                          |
-| `GET`    | `/api/models`                       | Model metric cards (accuracy / F1 / AUC).                  |
-| `GET`    | `/api/predictions/history`          | Time-series of recent predictions (`?since=ISO8601`).      |
-| `DELETE` | `/api/predictions/history`          | Clear the in-memory history.                               |
+| `GET`    | `/api/malware/sample`               | 10 sample rows (label columns stripped) for the demo.       |
+| `GET`    | `/api/analytics/model/{model_name}` | Confusion matrix + ROC + feature importance for a model.    |
+| `GET`    | `/api/health`                       | Liveness + list of loaded models.                           |
+| `GET`    | `/api/models`                       | Model metric cards (accuracy / F1 / AUC).                   |
+| `GET`    | `/api/predictions/history`          | Time-series of recent predictions (`?since=ISO8601`).       |
+| `DELETE` | `/api/predictions/history`          | Clear the in-memory history.                                |
 
 Valid spam `model` values: `rf_spam`, `nb_spam`, `logistic_regression_spam`.
 Interactive API docs are available at <http://localhost:8000/docs> while the server runs.
@@ -200,7 +200,7 @@ Interactive API docs are available at <http://localhost:8000/docs> while the ser
 
 `backend/services/model_loader.py` builds a `registry` at startup containing all six unpickled
 models plus a **freshly fitted TF-IDF vectorizer** (500 features, rebuilt from
-`data/processed/sms_spam_processed.csv`) and the malware feature-column list. Key facts:
+`backend/data/processed/sms_spam_processed.csv`) and the malware feature-column list. Key facts:
 
 - **Random Forest** uses only two engineered features (`message_length`, `word_count`) — **not** TF-IDF.
 - **Naive Bayes / Logistic Regression** use TF-IDF → bundled `MinMaxScaler` → `predict_proba`.
@@ -303,15 +303,15 @@ Outputs land in `data/processed/`, `outputs/models/`, `outputs/validation/`, and
 
 ## Troubleshooting
 
-| Problem                                                   | Cause                                                            | Fix                                                                                 |
-| --------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `uvicorn: command not found / not recognized`             | Python Scripts dir not on PATH                                  | Run `python -m uvicorn backend.main:app --reload`                                   |
-| Backend slow to respond on first request                  | Startup loads 6 models + precomputes analytics                 | Wait for `All models loaded and analytics ready.` (~10–15 s)                        |
-| `RuntimeError: Missing required file …`                   | A `.pkl` or processed CSV is absent                            | Run the [ML pipeline](#the-ml-pipeline-assignment-2) to regenerate outputs          |
-| `InconsistentVersionWarning` on startup                   | `.pkl` trained on sklearn 1.7.2, loaded on 1.8                 | Harmless — models still load and predict correctly                                  |
-| Dashboard shows an error banner                           | Backend not running / not reachable                            | Start the backend first; confirm `/api/health` returns ok                           |
-| Vite picks up new deps but page still broken              | Old dev server / cached deps                                   | Stop the dev server, `npm run dev` again, hard-refresh (Ctrl+Shift+R)               |
-| `conda: command not found` (ML scripts)                   | Running in Git Bash, not Anaconda Prompt                       | Open **Anaconda Prompt**                                                            |
+| Problem                                       | Cause                                          | Fix                                                                        |
+| --------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `uvicorn: command not found / not recognized` | Python Scripts dir not on PATH                 | Run `python -m uvicorn backend.main:app --reload`                          |
+| Backend slow to respond on first request      | Startup loads 6 models + precomputes analytics | Wait for `All models loaded and analytics ready.` (~10–15 s)               |
+| `RuntimeError: Missing required file …`       | A `.pkl` or processed CSV is absent            | Run the [ML pipeline](#the-ml-pipeline-assignment-2) to regenerate outputs |
+| `InconsistentVersionWarning` on startup       | `.pkl` trained on sklearn 1.7.2, loaded on 1.8 | Harmless — models still load and predict correctly                         |
+| Dashboard shows an error banner               | Backend not running / not reachable            | Start the backend first; confirm `/api/health` returns ok                  |
+| Vite picks up new deps but page still broken  | Old dev server / cached deps                   | Stop the dev server, `npm run dev` again, hard-refresh (Ctrl+Shift+R)      |
+| `conda: command not found` (ML scripts)       | Running in Git Bash, not Anaconda Prompt       | Open **Anaconda Prompt**                                                   |
 
 For a deeper log of every issue encountered while building the platform — and how each was
 resolved — see [`doc/VIBE_CODING_LOG.md`](doc/VIBE_CODING_LOG.md).
