@@ -1,10 +1,13 @@
 import pickle
 import logging
+from pathlib import Path
 from typing import TypedDict
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 logger = logging.getLogger(__name__)
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
 class ModelRegistry(TypedDict):
@@ -19,10 +22,10 @@ class ModelRegistry(TypedDict):
 
 
 def load_models(
-    models_dir: str = "outputs/models",
-    processed_dir: str = "data/processed",
-    spam_corpus_path: str = "data/processed/sms_spam_processed.csv",
-    malmem_path: str = "data/processed/malmem_processed.csv",
+    models_dir: str = str(BACKEND_DIR / "outputs" / "models"),
+    processed_dir: str = str(BACKEND_DIR / "data" / "processed"),
+    spam_corpus_path: str = str(BACKEND_DIR / "data" / "processed" / "sms_spam_processed.csv"),
+    malmem_path: str = str(BACKEND_DIR / "data" / "processed" / "malmem_processed.csv"),
 ) -> ModelRegistry:
     def _load_pkl(path: str):
         try:
