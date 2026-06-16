@@ -1,4 +1,5 @@
-import styles from './ExportButton.module.css'
+import Button from '@mui/material/Button'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
 
 export function objectsToCsv(rows) {
   if (!rows || rows.length === 0) return ''
@@ -29,9 +30,15 @@ function ExportButton({ data = [], filename = 'export.csv', label = 'Export CSV'
   }
 
   return (
-    <button className={styles.button} onClick={handleClick} disabled={!data || data.length === 0}>
+    <Button
+      variant="outlined"
+      startIcon={<FileDownloadIcon />}
+      onClick={handleClick}
+      disabled={!data || data.length === 0}
+      sx={{ textTransform: 'none', fontWeight: 600 }}
+    >
       {label}
-    </button>
+    </Button>
   )
 }
 

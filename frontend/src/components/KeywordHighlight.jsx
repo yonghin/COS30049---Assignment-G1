@@ -1,8 +1,10 @@
-import styles from './KeywordHighlight.module.css'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Chip from '@mui/material/Chip'
 
-// Curated spam-signal vocabulary. This mirrors the *kind* of signals the
+// Curated spam-signal vocabulary. This mirrors the kind of signals the
 // Random-Forest model keys on (has_* keyword flags, urls, digits) but is an
-// explanatory heuristic — NOT the model's exact internal weights.
+// explanatory heuristic, NOT the model's exact internal weights.
 const SPAM_WORDS = new Set([
   'free', 'win', 'winner', 'won', 'cash', 'prize', 'prizes', 'award', 'awarded',
   'urgent', 'congratulations', 'congrats', 'claim', 'offer', 'offers', 'guaranteed',
@@ -26,7 +28,7 @@ function spamReason(token) {
 }
 
 // Re-renders a message with spam-signal tokens highlighted, so the user can see
-// *why* it may have scored high. Splits on whitespace, preserving spacing.
+// why it may have scored high. Splits on whitespace, preserving spacing.
 function KeywordHighlight({ text }) {
   if (!text || !text.trim()) return null
 
@@ -38,24 +40,53 @@ function KeywordHighlight({ text }) {
     if (!reason) return part
     hits += 1
     return (
-      <mark key={i} className={styles.hit} title={`Signal: ${reason}`}>{part}</mark>
+      <Box
+        key={i}
+        component="mark"
+        title={`Signal: ${reason}`}
+        sx={{
+          bgcolor: 'rgba(255,77,77,0.22)',
+          color: 'error.main',
+          borderRadius: 1,
+          px: 0.5,
+        }}
+      >
+        {part}
+      </Box>
     )
   })
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.heading}>
-        Why it scored this way
-        <span className={styles.badge}>heuristic</span>
-      </div>
-      <p className={styles.message}>{nodes}</p>
-      <p className={styles.note}>
+    <Box sx={{ mt: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: 'text.primary' }}>
+          Why it scored this way
+        </Typography>
+        <Chip label="heuristic" size="small" variant="outlined" color="warning" sx={{ height: 20, fontSize: 10 }} />
+      </Box>
+      <Typography
+        sx={{
+          fontSize: 14,
+          lineHeight: 1.7,
+          color: 'text.primary',
+          bgcolor: 'action.hover',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 2,
+          p: 1.5,
+          m: 0,
+          wordBreak: 'break-word',
+        }}
+      >
+        {nodes}
+      </Typography>
+      <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 1, lineHeight: 1.5 }}>
         {hits > 0
           ? `${hits} spam-signal word${hits === 1 ? '' : 's'} highlighted.`
           : 'No common spam signals found in this message.'}
         {' '}This is an explanatory heuristic, not the model's exact weights.
-      </p>
-    </div>
+      </Typography>
+    </Box>
   )
 }
 

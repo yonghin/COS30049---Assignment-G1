@@ -1,4 +1,10 @@
 import { useState, useEffect } from 'react'
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import Tabs from '@mui/material/Tabs'
+import Tab from '@mui/material/Tab'
 import PageHeader from '../components/PageHeader'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
@@ -7,13 +13,12 @@ import LineChart from '../components/charts/LineChart'
 import BarChart from '../components/charts/BarChart'
 import RadarChart from '../components/charts/RadarChart'
 import { getModelAnalytics } from '../api/analyticsApi'
-import styles from './ModelAnalytics.module.css'
 
 const METRIC_COLORS = {
-  accuracy: 'var(--accent)',
-  precision: 'var(--purple)',
-  recall: 'var(--success)',
-  f1: 'var(--warning)',
+  accuracy: 'primary.main',
+  precision: 'secondary.main',
+  recall: 'success.main',
+  f1: 'warning.main',
 }
 
 // Derive headline metrics from a confusion matrix [[TN, FP], [FN, TP]].
@@ -34,11 +39,32 @@ function metricsFromConfusion(cm, auc) {
 }
 
 const TABS = [
-  { key: 'rf_spam',                  label: 'RF Spam',            cmLabels: ['Ham', 'Spam'],       color: '#00d4ff' },
-  { key: 'nb_spam',                  label: 'Naive Bayes',        cmLabels: ['Ham', 'Spam'],       color: '#00cc88' },
-  { key: 'logistic_regression_spam', label: 'Logistic Regression',cmLabels: ['Ham', 'Spam'],       color: '#ffb347' },
-  { key: 'svm_malware',              label: 'SVM Malware',        cmLabels: ['Benign', 'Malware'], color: '#ff4d4d' },
+  { key: 'rf_spam',                  label: 'RF Spam',             cmLabels: ['Ham', 'Spam'],       color: '#00d4ff' },
+  { key: 'nb_spam',                  label: 'Naive Bayes',         cmLabels: ['Ham', 'Spam'],       color: '#00cc88' },
+  { key: 'logistic_regression_spam', label: 'Logistic Regression', cmLabels: ['Ham', 'Spam'],       color: '#ffb347' },
+  { key: 'svm_malware',              label: 'SVM Malware',         cmLabels: ['Benign', 'Malware'], color: '#ff4d4d' },
 ]
+
+// Reusable bordered card wrapper, replaces the old .card class.
+function Card({ children, sx }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 3,
+        p: 3,
+        mb: 2.5,
+        animation: 'scaleIn 0.4s ease-out both',
+        ...sx,
+      }}
+    >
+      {children}
+    </Paper>
+  )
+}
 
 function ModelAnalytics() {
   const [active, setActive] = useState('rf_spam')
@@ -72,76 +98,102 @@ function ModelAnalytics() {
   const metrics = data ? metricsFromConfusion(data.confusion_matrix, data.roc?.auc) : null
 
   return (
-    <div className={styles.page}>
+    <Container maxWidth="xl" sx={{ py: 3, animation: 'fadeIn 0.4s ease-out both' }}>
       <PageHeader
         title="Model Analytics"
         subtitle="Inspect confusion matrices, ROC curves, metric profiles and feature importance per model."
       />
       <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
-      <div className={styles.tabs}>
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              className={t.key === active ? `${styles.tab} ${styles.activeTab}` : styles.tab}
-              onClick={() => setActive(t.key)}
+      <Tabs
+        value={active}
+        onChange={(e, v) => setActive(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: 1, borderColor: 'divider', mb: 2.5 }}
+      >
+        {TABS.map((t) => (
+          <Tab key={t.key} value={t.key} label={t.label} sx={{ textTransform: 'none' }} />
+        ))}
+      </Tabs>
+
+      <ProgressIndicator visible={loading} label="Loading analytics..." />
+
+      {data && (
+        <>
+          {metrics && (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+                gap: 2,
+                mb: 2.5,
+              }}
             >
-              {t.label}
-            </button>
-          ))}
-        </div>
+              {Object.entries(metrics.cards).map(([k, v], idx) => (
+                <Paper
+                  key={k}
+                  elevation={0}
+                  sx={{
+                    bgcolor: 'background.paper',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 3,
+                    p: 2,
+                    textAlign: 'center',
+                    animation: 'fadeSlideUp 0.4s ease-out both',
+                    animationDelay: `${idx * 0.07}s`,
+                  }}
+                >
+                  <Typography sx={{ fontSize: 11, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {k}
+                  </Typography>
+                  <Typography sx={{ fontSize: 24, fontWeight: 700, color: METRIC_COLORS[k], mt: 0.5 }}>
+                    {(v * 100).toFixed(1)}%
+                  </Typography>
+                </Paper>
+              ))}
+            </Box>
+          )}
 
-        <ProgressIndicator visible={loading} label="Loading analytics..." />
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2.5, mb: 0 }}>
+            <Card sx={{ mb: 0 }}>
+              <Heatmap matrix={data.confusion_matrix} labels={tab.cmLabels} title="Confusion Matrix" />
+            </Card>
+            <Card sx={{ mb: 0 }}>
+              <LineChart fpr={data.roc.fpr} tpr={data.roc.tpr} auc={data.roc.auc} color={tab.color} />
+            </Card>
+          </Box>
 
-        {data && (
-          <>
-            {metrics && (
-              <div className={styles.metricCards}>
-                {Object.entries(metrics.cards).map(([k, v]) => (
-                  <div key={k} className={styles.metricCard}>
-                    <div className={styles.metricLabel}>{k}</div>
-                    <div className={styles.metricValue} style={{ color: METRIC_COLORS[k] }}>{(v * 100).toFixed(1)}%</div>
-                  </div>
-                ))}
-              </div>
+          {metrics && (
+            <Card sx={{ mt: 2.5 }}>
+              <RadarChart
+                metrics={metrics.metrics}
+                series={[{ name: tab.label, values: metrics.values, color: tab.color }]}
+                title={`${tab.label} metric profile`}
+                rangeMin={0.7}
+              />
+            </Card>
+          )}
+
+          <Card>
+            <Typography sx={{ fontSize: 14, color: 'text.primary', mb: 1.5 }}>Feature Importance</Typography>
+            {data.feature_importance ? (
+              <BarChart
+                horizontal
+                categories={data.feature_importance.map((f) => f.feature).reverse()}
+                values={data.feature_importance.map((f) => f.importance).reverse()}
+                title="Top Features"
+              />
+            ) : (
+              <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 5, fontSize: 13 }}>
+                Not available for this model
+              </Typography>
             )}
-
-            <div className={styles.topRow}>
-              <div className={styles.card}>
-                <Heatmap matrix={data.confusion_matrix} labels={tab.cmLabels} title="Confusion Matrix" />
-              </div>
-              <div className={styles.card}>
-                <LineChart fpr={data.roc.fpr} tpr={data.roc.tpr} auc={data.roc.auc} color={tab.color} />
-              </div>
-            </div>
-
-            {metrics && (
-              <div className={styles.card}>
-                <RadarChart
-                  metrics={metrics.metrics}
-                  series={[{ name: tab.label, values: metrics.values, color: tab.color }]}
-                  title={`${tab.label} — metric profile`}
-                  rangeMin={0.7}
-                />
-              </div>
-            )}
-
-            <div className={styles.card}>
-              <h3 className={styles.sectionTitle}>Feature Importance</h3>
-              {data.feature_importance ? (
-                <BarChart
-                  horizontal
-                  categories={data.feature_importance.map((f) => f.feature).reverse()}
-                  values={data.feature_importance.map((f) => f.importance).reverse()}
-                  title="Top Features"
-                />
-              ) : (
-                <div className={styles.noData}>Not available for this model</div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+          </Card>
+        </>
+      )}
+    </Container>
   )
 }
 

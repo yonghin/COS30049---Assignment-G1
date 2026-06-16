@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react'
-import styles from './FileUploadWidget.module.css'
+import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 
 function FileUploadWidget({ accept = '', label = 'Upload File', onFileSelected }) {
   const inputRef = useRef(null)
@@ -34,23 +37,43 @@ function FileUploadWidget({ accept = '', label = 'Upload File', onFileSelected }
   }
 
   return (
-    <label
-      className={dragOver ? `${styles.dropzone} ${styles.dragover}` : styles.dropzone}
+    <Paper
+      component="label"
+      elevation={0}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
+        p: 4,
+        cursor: 'pointer',
+        textAlign: 'center',
+        border: '2px dashed',
+        borderColor: dragOver ? 'primary.main' : 'divider',
+        borderRadius: 3,
+        bgcolor: dragOver ? 'action.hover' : 'background.paper',
+        transition: 'border-color 0.2s, background-color 0.2s',
+        '&:hover': { borderColor: 'primary.main' },
+      }}
     >
-      <div className={styles.icon}>⬆</div>
-      <div className={styles.label}>{label}</div>
-      <div className={styles.hint}>{fileName ? fileName : `Accepted: ${accept || 'any'}`}</div>
-      <input
+      <CloudUploadIcon sx={{ fontSize: 32, color: 'text.secondary' }} />
+      <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>{label}</Typography>
+      <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+        {fileName ? fileName : `Accepted: ${accept || 'any'}`}
+      </Typography>
+      <Box
+        component="input"
         ref={inputRef}
         type="file"
         accept={accept}
-        className={styles.hiddenInput}
         onChange={handleChange}
+        sx={{ display: 'none' }}
       />
-    </label>
+    </Paper>
   )
 }
 

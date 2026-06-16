@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Card from '@mui/material/Card'
+import Paper from '@mui/material/Paper'
 import ErrorBanner from '../components/ErrorBanner'
 import ProgressIndicator from '../components/ProgressIndicator'
 import ResultsTable from '../components/ResultsTable'
@@ -12,7 +18,6 @@ import { getModels, getHistory } from '../api/historyApi'
 import { getHistory as getLocalHistory, subscribe } from '../utils/historyStore'
 import { modelLabel } from '../constants/modelNames'
 import { useCountUp } from '../hooks/useCountUp'
-import styles from './Dashboard.module.css'
 
 const FEATURES = [
   { to: '/spam', icon: '🛡️', title: 'Spam Detector', desc: 'Classify messages as spam or ham with three trained models.' },
@@ -20,31 +25,45 @@ const FEATURES = [
   { to: '/analytics', icon: '📊', title: 'Model Analytics', desc: 'Inspect confusion matrices, ROC curves and feature importance.' },
 ]
 
-// Plain-language description of each model (no About page, so it lives here).
 const MODEL_INFO = {
-  rf_spam:                  { category: 'Spam classifier',   detects: 'Spam via engineered text features',       color: '#00d4ff' },
-  nb_spam:                  { category: 'Spam classifier',   detects: 'Spam via TF-IDF token probabilities',     color: '#00cc88' },
-  lr_spam:                  { category: 'Spam classifier',   detects: 'Spam via TF-IDF linear weights',          color: '#ffb347' },
-  logistic_regression_spam: { category: 'Spam classifier',   detects: 'Spam via TF-IDF linear weights',          color: '#ffb347' },
-  svm_malware:              { category: 'Malware classifier', detects: 'Malware vs benign memory samples',        color: '#ff4d4d' },
-  kmeans_malware:           { category: 'Malware clustering', detects: 'Clusters malware samples',               color: '#6c63ff' },
-  dbscan_malware:           { category: 'Anomaly detection',  detects: 'Flags anomalous outlier samples',        color: '#ffb347' },
+  rf_spam:                  { category: 'Spam classifier',   detects: 'Spam via engineered text features',   color: '#00d4ff' },
+  nb_spam:                  { category: 'Spam classifier',   detects: 'Spam via TF-IDF token probabilities', color: '#00cc88' },
+  lr_spam:                  { category: 'Spam classifier',   detects: 'Spam via TF-IDF linear weights',       color: '#ffb347' },
+  logistic_regression_spam: { category: 'Spam classifier',   detects: 'Spam via TF-IDF linear weights',       color: '#ffb347' },
+  svm_malware:              { category: 'Malware classifier', detects: 'Malware vs benign memory samples',     color: '#ff4d4d' },
+  kmeans_malware:           { category: 'Malware clustering', detects: 'Clusters malware samples',             color: '#6c63ff' },
+  dbscan_malware:           { category: 'Anomaly detection',  detects: 'Flags anomalous outlier samples',      color: '#ffb347' },
 }
 
 const RADAR_METRICS = ['Accuracy', 'Precision', 'Recall', 'F1', 'AUC']
 const DONUT_LABELS = ['Spam', 'Malware']
 const DONUT_COLORS = ['#00d4ff', '#ff4d4d']
 
-// Single animated counter — separate component so each can own a useCountUp hook.
-function KpiCounter({ label, value, accent }) {
+// Single animated KPI counter. Each owns its own useCountUp hook.
+// `index` drives a staggered entry animation via animation-delay.
+function KpiCounter({ label, value, accent, index = 0 }) {
   const display = useCountUp(value)
   return (
-    <div className={styles.kpiCard}>
-      <div className={styles.kpiValue} style={accent ? { color: accent } : undefined}>
+    <Paper
+      elevation={0}
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 3,
+        p: 2.5,
+        textAlign: 'center',
+        animation: 'fadeSlideUp 0.45s ease-out both',
+        animationDelay: `${index * 0.07}s`,
+      }}
+    >
+      <Typography sx={{ fontSize: 34, fontWeight: 800, color: accent || 'primary.main', letterSpacing: '-0.02em' }}>
         {display.toLocaleString()}
-      </div>
-      <div className={styles.kpiLabel}>{label}</div>
-    </div>
+      </Typography>
+      <Typography sx={{ fontSize: 11, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mt: 0.5 }}>
+        {label}
+      </Typography>
+    </Paper>
   )
 }
 
@@ -110,10 +129,9 @@ function Dashboard() {
     .map((i) => ({
       time:  fmtMYT(i.ts),
       task:  i.kind,
-      label: i.label ?? '—',
+      label: i.label ?? '-',
     }))
 
-  // Memoized chart props — prevent charts from re-rendering on every 5-second poll tick.
   const radarSeries = useMemo(
     () => models
       .filter((m) => m.accuracy != null && m.f1 != null && m.auc != null)
@@ -136,103 +154,185 @@ function Dashboard() {
   const donutValues = useMemo(() => [sumSpam, sumMalware], [sumSpam, sumMalware])
 
   return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <div className={styles.heroInner}>
-          <h1 className={styles.heroTitle}>NTCyber AI</h1>
-          <p className={styles.heroTagline}>Protect. Detect. Analyze.</p>
-          <p className={styles.heroBlurb}>
+    <Box>
+      {/* Hero */}
+      <Box
+        sx={{
+          position: 'relative',
+          minHeight: 'calc(100vh - 60px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          px: 3,
+          py: 5,
+          borderBottom: 1,
+          borderColor: 'divider',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'radial-gradient(1200px 600px at 50% -10%, rgba(0,212,255,0.14), transparent 60%), linear-gradient(135deg, rgba(0,212,255,0.08), rgba(108,99,255,0.08))'
+              : 'radial-gradient(1200px 600px at 50% -10%, rgba(0,102,204,0.12), transparent 60%), linear-gradient(135deg, rgba(0,102,204,0.07), rgba(91,84,230,0.07))',
+        }}
+      >
+        <Box sx={{ maxWidth: 760, animation: 'heroIn 0.6s ease-out' }}>
+          <Typography sx={{ fontSize: { xs: 32, sm: 44, md: 64 }, fontWeight: 800, color: 'text.primary', letterSpacing: '-0.03em' }}>
+            NTCyber AI
+          </Typography>
+          <Typography sx={{ fontSize: { xs: 16, md: 22 }, fontWeight: 600, color: 'primary.main', mt: 1.5 }}>
+            Protect. Detect. Analyze.
+          </Typography>
+          <Typography sx={{ fontSize: { xs: 14, md: 16 }, color: 'text.secondary', mt: 2, maxWidth: 600, mx: 'auto', lineHeight: 1.7 }}>
             A machine-learning platform for spam classification, malware screening and model
-            analytics — all in one place.
-          </p>
-          <div className={styles.heroActions}>
+            analytics, all in one place.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap', mt: 3.5 }}>
             {FEATURES.map((f) => (
-              <Link key={f.to} to={f.to} className={styles.heroBtn}>
-                <span aria-hidden="true">{f.icon}</span> {f.title}
-              </Link>
+              <Button
+                key={f.to}
+                component={RouterLink}
+                to={f.to}
+                variant="outlined"
+                sx={{
+                  bgcolor: 'background.paper',
+                  borderColor: 'divider',
+                  borderRadius: 2.5,
+                  px: 2.5,
+                  py: 1.5,
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  textTransform: 'none',
+                  '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' },
+                }}
+              >
+                <Box component="span" aria-hidden="true" sx={{ mr: 1 }}>{f.icon}</Box> {f.title}
+              </Button>
             ))}
-          </div>
-        </div>
-        <span className={styles.scrollCue} aria-hidden="true">⌄</span>
-      </section>
+          </Box>
+        </Box>
+        {/* Bouncing scroll cue at the bottom of the hero */}
+        <Box
+          component="span"
+          aria-hidden="true"
+          sx={{
+            position: 'absolute',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: 28,
+            color: 'text.secondary',
+            animation: 'bounce 1.6s infinite',
+          }}
+        >
+          ⌄
+        </Box>
+      </Box>
 
-      <div className={styles.body}>
+      {/* Body */}
+      <Container maxWidth="xl" sx={{ py: 3 }}>
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
-        <div className={styles.kpiGrid}>
-          <KpiCounter label="Total predictions" value={sumSpam + sumMalware} accent="var(--purple)" />
-          <KpiCounter label="Spam predictions" value={sumSpam} accent="var(--accent)" />
-          <KpiCounter label="Malware predictions" value={sumMalware} accent="var(--danger)" />
-          <KpiCounter label="Models loaded" value={models.length} accent="var(--success)" />
-        </div>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <KpiCounter index={0} label="Total predictions" value={sumSpam + sumMalware} accent="secondary.main" />
+          <KpiCounter index={1} label="Spam predictions" value={sumSpam} accent="primary.main" />
+          <KpiCounter index={2} label="Malware predictions" value={sumMalware} accent="error.main" />
+          <KpiCounter index={3} label="Models loaded" value={models.length} accent="success.main" />
+        </Box>
 
         <ProgressIndicator visible={loading} label="Loading models..." />
 
-        <h3 className={styles.sectionTitle}>Models</h3>
-        <div className={styles.modelGrid}>
+        <Typography sx={{ fontSize: 14, color: 'text.primary', mb: 1.5 }}>Models</Typography>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           {models.map((m) => {
             const info = MODEL_INFO[m.name] ?? { category: m.task, detects: m.task }
-            const cardColor = info.color ?? 'var(--accent)'
+            const cardColor = info.color ?? '#00d4ff'
             return (
-              <div key={m.name} className={styles.modelCard} style={{ '--card-accent': cardColor }}>
-                <div className={styles.modelHead}>
-                  <span className={styles.modelName}>{modelLabel(m.name)}</span>
-                  <span className={styles.modelAcc}>{(m.accuracy * 100).toFixed(1)}%</span>
-                </div>
-                <div className={styles.modelType}>{info.category}</div>
-                <div className={styles.modelDesc}>{info.detects}</div>
-              </div>
+              <Card
+                key={m.name}
+                elevation={0}
+                sx={{
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
+                  borderLeft: '4px solid',
+                  borderLeftColor: cardColor,
+                  borderRadius: 3,
+                  p: 2.25,
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  animation: 'scaleIn 0.4s ease-out both',
+                  '&:hover': { boxShadow: 4, transform: 'translateY(-3px)' },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: 'text.primary' }}>{modelLabel(m.name)}</Typography>
+                  <Typography sx={{ fontSize: 16, fontWeight: 700, color: cardColor }}>{(m.accuracy * 100).toFixed(1)}%</Typography>
+                </Box>
+                <Typography sx={{ fontSize: 12, color: cardColor, mt: 0.25, fontWeight: 600 }}>{info.category}</Typography>
+                <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.75, lineHeight: 1.5 }}>{info.detects}</Typography>
+              </Card>
             )
           })}
-        </div>
+        </Box>
 
-        <div className={styles.chartsRow}>
-          <div className={styles.card}>
-            <RadarChart
-              metrics={RADAR_METRICS}
-              series={radarSeries}
-              title="Model Comparison"
-              rangeMin={0.95}
-            />
-          </div>
-          <div className={styles.card}>
-            <DonutChart
-              labels={DONUT_LABELS}
-              values={donutValues}
-              colors={DONUT_COLORS}
-              title="Predictions by Type"
-            />
-          </div>
-        </div>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+          <ChartCard>
+            <RadarChart metrics={RADAR_METRICS} series={radarSeries} title="Model Comparison" rangeMin={0.95} />
+          </ChartCard>
+          <ChartCard>
+            <DonutChart labels={DONUT_LABELS} values={donutValues} colors={DONUT_COLORS} title="Predictions by Type" />
+          </ChartCard>
+        </Box>
 
-        <div className={styles.chartsRow}>
-          <div className={styles.card}>
-            <BarChart
-              models={barLabels}
-              accuracy={barAccuracy}
-              f1={barF1}
-              auc={barAuc}
-              title="Model Performance"
-            />
-          </div>
-          <div className={styles.card}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+          <ChartCard>
+            <BarChart models={barLabels} accuracy={barAccuracy} f1={barF1} auc={barAuc} title="Model Performance" />
+          </ChartCard>
+          <ChartCard>
             <LineChart spamSeries={spamSeries} malwareSeries={malwareSeries} title="Live Predictions" />
-          </div>
-        </div>
+          </ChartCard>
+        </Box>
 
-        <div className={styles.card}>
-          <h3 className={styles.sectionTitle}>Recent Activity</h3>
-          <ResultsTable
-            columns={['time', 'task', 'label']}
-            rows={activityRows}
-            filterColumn="task"
-          />
-          <div className={styles.exportRow}>
+        <ChartCard>
+          <Typography sx={{ fontSize: 14, color: 'text.primary', mb: 1.5 }}>Recent Activity</Typography>
+          <ResultsTable columns={['time', 'task', 'label']} rows={activityRows} filterColumn="task" />
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
             <ExportButton data={activityRows} filename="recent_activity.csv" />
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </ChartCard>
+      </Container>
+    </Box>
+  )
+}
+
+// Reusable card wrapper for charts / tables - replaces the old .card class.
+function ChartCard({ children }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 3,
+        p: 2.5,
+        animation: 'fadeIn 0.5s ease-out both',
+      }}
+    >
+      {children}
+    </Paper>
   )
 }
 

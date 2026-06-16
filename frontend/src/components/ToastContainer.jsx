@@ -1,30 +1,62 @@
-import styles from './ToastContainer.module.css'
+import Snackbar from '@mui/material/Snackbar'
+import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
+import Slide from '@mui/material/Slide'
 
-const ICONS = { success: '✓', error: '✕', info: 'ℹ' }
+// Toasts are stacked at the top-right. Each maps its type to an Alert severity.
+const SEVERITY = { success: 'success', error: 'error', info: 'info' }
 
-function ToastContainer({ toasts = [], onDismiss }) {
+// Slide in/out from the right, matching the original toast animation.
+function SlideLeft(props) {
+  return <Slide {...props} direction="left" />
+}
+
+function ToastContainer({ toasts = [], onDismiss, onDismissNow }) {
   if (toasts.length === 0) return null
   return (
-    <div className={styles.container} role="status" aria-live="polite">
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          className={`${styles.toast} ${styles[t.type] ?? ''} ${t.leaving ? styles.leaving : ''}`}
-        >
-          <span className={styles.icon} aria-hidden="true">{ICONS[t.type] ?? 'ℹ'}</span>
-          <span className={styles.message}>{t.message}</span>
-          {t.onUndo && (
-            <button
-              className={styles.undoBtn}
-              onClick={() => { t.onUndo(); onDismiss(t.id) }}
+    <Snackbar
+      open
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      TransitionComponent={SlideLeft}
+      sx={{
+        top: { xs: 80, sm: 80 },
+        right: { xs: 16, sm: 20 },
+        left: 'auto',
+      }}
+    >
+      <Stack spacing={1.25} sx={{ maxWidth: 380 }}>
+        {toasts.map((t) => (
+          <Slide key={t.id} direction="left" in={!t.leaving} mountOnEnter unmountOnExit>
+            <Alert
+              severity={SEVERITY[t.type] ?? 'info'}
+              variant="outlined"
+              onClose={() => onDismiss(t.id)}
+              sx={{ bgcolor: 'background.paper', boxShadow: 3, alignItems: 'center' }}
+              action={
+                t.onUndo ? (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      // Run the undo callback, then remove THIS toast instantly
+                      // so the follow-up toast (e.g. History restored) appears cleanly.
+                      t.onUndo()
+                      onDismissNow(t.id)
+                    }}
+                    sx={{ fontWeight: 700, textTransform: 'none', whiteSpace: 'nowrap' }}
+                  >
+                    Undo{t.secondsLeft != null ? ` (${t.secondsLeft}s)` : ''}
+                  </Button>
+                ) : undefined
+              }
             >
-              Undo{t.secondsLeft != null ? ` (${t.secondsLeft}s)` : ''}
-            </button>
-          )}
-          <button className={styles.close} onClick={() => onDismiss(t.id)} aria-label="Dismiss">✕</button>
-        </div>
-      ))}
-    </div>
+              {t.message}
+            </Alert>
+          </Slide>
+        ))}
+      </Stack>
+    </Snackbar>
   )
 }
 

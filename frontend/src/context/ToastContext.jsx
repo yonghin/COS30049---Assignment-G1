@@ -8,32 +8,41 @@ let nextId = 0
 const EXIT_MS = 300
 
 export function ToastProvider({ children }) {
-  const [toasts, setToasts]  = useState([])
-  const timers    = useRef({})
+  const [toasts, setToasts] = useState([])
+  const timers = useRef({})
   const intervals = useRef({})
 
-  const remove = useCallback((id) => {
-    setToasts((list) => list.filter((t) => t.id !== id))
+  const clearTimers = useCallback((id) => {
     clearTimeout(timers.current[id]);     delete timers.current[id]
     clearInterval(intervals.current[id]); delete intervals.current[id]
   }, [])
 
+  const remove = useCallback((id) => {
+    setToasts((list) => list.filter((t) => t.id !== id))
+    clearTimers(id)
+  }, [clearTimers])
+
+  // Removes a toast immediately with no slide-out animation.
+  // Used when one toast is being replaced by another (e.g. Undo -> History restored).
+  const removeNow = useCallback((id) => {
+    remove(id)
+  }, [remove])
+
   // Triggers slide-out animation, then removes after EXIT_MS.
   const dismiss = useCallback((id) => {
-    setToasts((list) => list.map((t) => t.id === id ? { ...t, leaving: true } : t))
-    clearTimeout(timers.current[id]);     delete timers.current[id]
-    clearInterval(intervals.current[id]); delete intervals.current[id]
+    setToasts((list) => list.map((t) => (t.id === id ? { ...t, leaving: true } : t)))
+    clearTimers(id)
     setTimeout(() => remove(id), EXIT_MS)
-  }, [remove])
+  }, [remove, clearTimers])
 
   const push = useCallback((type, message, duration = 3500, options = {}) => {
     const id = ++nextId
-    const hasUndo     = typeof options.onUndo === 'function'
+    const hasUndo = typeof options.onUndo === 'function'
     const initSeconds = hasUndo ? Math.round(duration / 1000) : undefined
 
     setToasts((list) => [...list, {
       id, type, message, leaving: false,
-      onUndo:      hasUndo ? options.onUndo : null,
+      onUndo: hasUndo ? options.onUndo : null,
       secondsLeft: initSeconds,
     }])
 
@@ -63,7 +72,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={api.current}>
       {children}
-      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      <ToastContainer toasts={toasts} onDismiss={dismiss} onDismissNow={removeNow} />
     </ToastContext.Provider>
   )
 }

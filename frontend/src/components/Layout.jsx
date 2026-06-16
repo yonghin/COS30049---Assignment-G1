@@ -1,15 +1,17 @@
 import NavBar from './NavBar'
 import Footer from './Footer'
-import styles from './Layout.module.css'
+import Box from '@mui/material/Box'
 
-// App shell: fixed NavBar + page content + Footer pinned to the bottom.
+// App shell: NavBar + page content + Footer pinned to the bottom.
 function Layout({ children }) {
   return (
-    <div className={styles.shell}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <NavBar />
-      <main className={styles.main}>{children}</main>
+      <Box component="main" sx={{ flex: '1 0 auto' }}>
+        {children}
+      </Box>
       <Footer />
-    </div>
+    </Box>
   )
 }
 

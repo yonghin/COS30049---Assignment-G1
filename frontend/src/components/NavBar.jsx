@@ -1,7 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { Link as RouterLink, useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import styles from './NavBar.module.css'
+import AppBar from '@mui/material/AppBar'
+import Toolbar from '@mui/material/Toolbar'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Drawer from '@mui/material/Drawer'
+import List from '@mui/material/List'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemText from '@mui/material/ListItemText'
+import MenuIcon from '@mui/icons-material/Menu'
+import LightModeIcon from '@mui/icons-material/LightMode'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
 
 const LINKS = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -15,81 +26,103 @@ function NavBar() {
   const { pathname } = useLocation()
   const { theme, toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef(null)
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    if (!menuOpen) return
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [menuOpen])
-
-  // Close menu on route change
-  useEffect(() => { setMenuOpen(false) }, [pathname])
 
   return (
-    <nav className={styles.navbar} ref={menuRef}>
-      <div className={styles.left}>
-        <Link to="/dashboard" className={styles.logo}>
-          <img src="/NTCyber_AI_Logo.png" alt="" className={styles.logoImg} />
-          NTCyber AI
-        </Link>
-        <div className={styles.links}>
-          {LINKS.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className={pathname === l.to ? `${styles.link} ${styles.active}` : styles.link}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}
+    >
+      <Toolbar sx={{ minHeight: 60, justifyContent: 'space-between' }}>
+        {/* Left: logo + desktop links */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Box
+            component={RouterLink}
+            to="/dashboard"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              textDecoration: 'none',
+              color: 'text.primary',
+              fontWeight: 700,
+              fontSize: 18,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Box
+              component="img"
+              src="/NTCyber_AI_Logo.png"
+              alt=""
+              sx={{ width: 32, height: 32, objectFit: 'contain' }}
+            />
+            NTCyber AI
+          </Box>
 
-      <div className={styles.right}>
-        <button
-          className={styles.themeToggle}
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 0.5 }}>
+            {LINKS.map((l) => {
+              const active = pathname === l.to
+              return (
+                <Button
+                  key={l.to}
+                  component={RouterLink}
+                  to={l.to}
+                  sx={{
+                    color: active ? 'primary.main' : 'text.secondary',
+                    borderRadius: 0,
+                    borderBottom: 2,
+                    borderColor: active ? 'primary.main' : 'transparent',
+                    textTransform: 'none',
+                    fontSize: 14,
+                    '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                  }}
+                >
+                  {l.label}
+                </Button>
+              )
+            })}
+          </Box>
+        </Box>
 
-        <button
-          className={`${styles.burger} ${menuOpen ? styles.burgerOpen : ''}`}
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Toggle navigation menu"
-          aria-expanded={menuOpen}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-      </div>
+        {/* Right: theme toggle + mobile burger */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton
+            onClick={toggleTheme}
+            sx={{ color: 'text.primary' }}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          >
+            {theme === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
 
-      {/* Mobile dropdown menu */}
-      {menuOpen && (
-        <div className={styles.mobileMenu}>
-          {LINKS.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className={pathname === l.to ? `${styles.mobileLink} ${styles.mobileLinkActive}` : styles.mobileLink}
-              onClick={() => setMenuOpen(false)}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </nav>
+          <IconButton
+            onClick={() => setMenuOpen(true)}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: 'text.primary' }}
+            aria-label="Open navigation menu"
+          >
+            <MenuIcon />
+          </IconButton>
+        </Box>
+      </Toolbar>
+
+      {/* Mobile drawer */}
+      <Drawer anchor="right" open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <Box sx={{ width: 240 }} role="presentation">
+          <List>
+            {LINKS.map((l) => (
+              <ListItemButton
+                key={l.to}
+                component={RouterLink}
+                to={l.to}
+                selected={pathname === l.to}
+                onClick={() => setMenuOpen(false)}
+              >
+                <ListItemText primary={l.label} />
+              </ListItemButton>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+    </AppBar>
   )
 }
 

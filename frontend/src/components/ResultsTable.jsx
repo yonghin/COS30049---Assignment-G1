@@ -1,5 +1,18 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import styles from './ResultsTable.module.css'
+import { useState, useMemo, useEffect } from 'react'
+import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
+import Typography from '@mui/material/Typography'
+import TextField from '@mui/material/TextField'
+import MenuItem from '@mui/material/MenuItem'
+import Checkbox from '@mui/material/Checkbox'
+import Pagination from '@mui/material/Pagination'
+import TableContainer from '@mui/material/TableContainer'
+import Table from '@mui/material/Table'
+import TableHead from '@mui/material/TableHead'
+import TableBody from '@mui/material/TableBody'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import TableSortLabel from '@mui/material/TableSortLabel'
 
 function formatCell(value) {
   if (typeof value === 'boolean') return value ? '✓' : '✗'
@@ -7,11 +20,11 @@ function formatCell(value) {
   return value
 }
 
-// Backward-compatible: existing callers pass { columns, rows }. New optional props:
-//   searchable (default true)  — text box filtering across all cells
-//   sortable   (default true)  — click headers to sort asc/desc
-//   filterColumn               — column key to expose a category dropdown for
-//   pageSize                   — number of rows per page (omit = no pagination)
+// Backward-compatible: existing callers pass { columns, rows }. Optional props:
+//   searchable (default true)  - text box filtering across all cells
+//   sortable   (default true)  - click headers to sort asc/desc
+//   filterColumn               - column key to expose a category dropdown for
+//   pageSize                   - number of rows per page (omit = no pagination)
 function ResultsTable({
   columns,
   rows,
@@ -63,21 +76,16 @@ function ResultsTable({
     return data
   }, [rows, cols, query, sort, searchable, sortable, filterColumn, filterValue])
 
-  // Reset to page 1 when filters/search change
+  // Reset to page 1 when filters/search change.
   useEffect(() => { setPage(1) }, [query, filterValue, sort])
 
-  // Selection helpers (only active when selectable=true)
+  // Selection helpers (only active when selectable=true).
   const allFilteredKeys = useMemo(
     () => (selectable ? filtered.map((r) => r[keyField]).filter(Boolean) : []),
     [selectable, filtered, keyField]
   )
   const allSelected = selectable && allFilteredKeys.length > 0 && allFilteredKeys.every((k) => selectedKeys?.has(k))
   const someSelected = selectable && !allSelected && allFilteredKeys.some((k) => selectedKeys?.has(k))
-
-  const selectAllRef = useRef(null)
-  useEffect(() => {
-    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected
-  }, [someSelected])
 
   const toggleAll = () => {
     if (!onSelectionChange) return
@@ -99,7 +107,11 @@ function ResultsTable({
   const view = pageSize ? filtered.slice((page - 1) * pageSize, page * pageSize) : filtered
 
   if (!rows || rows.length === 0) {
-    return <div className={styles.empty}>No data to display.</div>
+    return (
+      <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 3, fontSize: 13 }}>
+        No data to display.
+      </Typography>
+    )
   }
 
   const toggleSort = (key) => {
@@ -110,120 +122,119 @@ function ResultsTable({
   const showToolbar = searchable || (filterColumn && filterOptions.length > 0)
 
   return (
-    <div className={styles.wrap}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
       {showToolbar && (
-        <div className={styles.toolbar}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
           {searchable && (
-            <input
-              className={styles.search}
-              type="text"
-              placeholder="Search…"
+            <TextField
+              size="small"
+              placeholder="Search..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search table"
+              sx={{ flex: 1, minWidth: 160, maxWidth: 280 }}
             />
           )}
           {filterColumn && filterOptions.length > 0 && (
-            <select
-              className={styles.filter}
+            <TextField
+              select
+              size="small"
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
               aria-label={`Filter by ${filterColumn}`}
+              sx={{ minWidth: 140 }}
             >
-              <option value="all">All {filterColumn}</option>
+              <MenuItem value="all">All {filterColumn}</MenuItem>
               {filterOptions.map((o) => (
-                <option key={String(o)} value={String(o)}>{String(o)}</option>
+                <MenuItem key={String(o)} value={String(o)}>{String(o)}</MenuItem>
               ))}
-            </select>
+            </TextField>
           )}
-          <span className={styles.count}>{filtered.length} of {rows.length}</span>
-        </div>
+          <Typography sx={{ color: 'text.secondary', fontSize: 12, ml: 'auto' }}>
+            {filtered.length} of {rows.length}
+          </Typography>
+        </Box>
       )}
 
-      <div className={styles.container}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
+      <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
               {selectable && (
-                <th className={styles.checkCol}>
-                  <input
-                    ref={selectAllRef}
-                    type="checkbox"
-                    className={styles.checkInput}
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
                     checked={allSelected}
+                    indeterminate={someSelected}
                     onChange={toggleAll}
-                    aria-label="Select all"
+                    inputProps={{ 'aria-label': 'Select all' }}
                   />
-                </th>
+                </TableCell>
               )}
               {cols.map((c) => (
-                <th
+                <TableCell
                   key={c}
-                  onClick={() => toggleSort(c)}
-                  className={sortable ? styles.sortable : undefined}
+                  sx={{ textTransform: 'uppercase', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}
+                  sortDirection={sort.key === c ? sort.dir : false}
                 >
-                  {c}
-                  {sort.key === c && <span className={styles.arrow}>{sort.dir === 'asc' ? ' ▲' : ' ▼'}</span>}
-                </th>
+                  {sortable ? (
+                    <TableSortLabel
+                      active={sort.key === c}
+                      direction={sort.key === c ? sort.dir : 'asc'}
+                      onClick={() => toggleSort(c)}
+                    >
+                      {c}
+                    </TableSortLabel>
+                  ) : (
+                    c
+                  )}
+                </TableCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {view.map((row, i) => {
               const rowKey = row[keyField]
               const isChecked = selectable && selectedKeys?.has(rowKey)
               return (
-                <tr key={i} className={isChecked ? styles.rowSelected : undefined}>
+                <TableRow key={i} hover selected={!!isChecked}>
                   {selectable && (
-                    <td className={styles.checkCell}>
-                      <input
-                        type="checkbox"
-                        className={styles.checkInput}
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
                         checked={!!isChecked}
                         onChange={() => toggleRow(rowKey)}
-                        aria-label="Select row"
+                        inputProps={{ 'aria-label': 'Select row' }}
                       />
-                    </td>
+                    </TableCell>
                   )}
                   {cols.map((c) => (
-                    <td key={c}>{formatCell(row[c])}</td>
+                    <TableCell key={c}>{formatCell(row[c])}</TableCell>
                   ))}
-                </tr>
+                </TableRow>
               )
             })}
-          </tbody>
-        </table>
-        {view.length === 0 && <div className={styles.empty}>No rows match your filters.</div>}
-      </div>
+          </TableBody>
+        </Table>
+        {view.length === 0 && (
+          <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 3, fontSize: 13 }}>
+            No rows match your filters.
+          </Typography>
+        )}
+      </TableContainer>
 
       {pageSize && totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button
-            className={styles.pageBtn}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            &#8249;
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            className={styles.pageBtn}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            &#8250;
-          </button>
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 0.5 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(e, p) => setPage(p)}
+            size="small"
+            color="primary"
+          />
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
 

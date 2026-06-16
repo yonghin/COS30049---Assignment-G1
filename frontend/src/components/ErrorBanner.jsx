@@ -1,14 +1,14 @@
-import styles from './ErrorBanner.module.css'
+import Collapse from '@mui/material/Collapse'
+import Alert from '@mui/material/Alert'
 
 function ErrorBanner({ message, onDismiss }) {
-  if (message === null || message === undefined) return null
+  const open = message !== null && message !== undefined
   return (
-    <div className={styles.banner}>
-      <span>{message}</span>
-      <button className={styles.dismiss} onClick={onDismiss} aria-label="Dismiss error">
-        ✕
-      </button>
-    </div>
+    <Collapse in={open} sx={{ mb: open ? 2 : 0 }}>
+      <Alert severity="error" onClose={onDismiss}>
+        {message}
+      </Alert>
+    </Collapse>
   )
 }
 
