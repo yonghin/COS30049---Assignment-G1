@@ -25,8 +25,10 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
       const { bg, text, muted, border } = getThemeColors()
       const W  = container.clientWidth || 500
       const H  = 400
+      // On narrow screens, shrink the left margin so horizontal bars use more width.
+      const hLeft = W < 480 ? 90 : W < 700 ? 120 : 160
       const m  = horizontal
-        ? { top: 44, right: 30, bottom: 50, left: 160 }
+        ? { top: 44, right: 30, bottom: 50, left: hLeft }
         : { top: 44, right: 30, bottom: 60, left: 60 }
       const iW = W - m.left - m.right
       const iH = H - m.top  - m.bottom
@@ -280,7 +282,7 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
     return () => window.removeEventListener('resize', draw)
   }, [models, accuracy, f1, auc, title, horizontal, categories, values, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
 
 export default BarChart

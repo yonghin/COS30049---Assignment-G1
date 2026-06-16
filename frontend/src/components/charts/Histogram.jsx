@@ -154,7 +154,7 @@ function Histogram({
     return () => window.removeEventListener('resize', draw)
   }, [values, title, xLabel, color, nbins, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
 
 export default Histogram

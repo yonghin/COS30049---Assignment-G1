@@ -95,7 +95,7 @@ function GaugeChart({ spamProb = null, label }) {
     return () => window.removeEventListener('resize', draw)
   }, [spamProb, label, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '300px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '300px', position: 'relative' }} />
 }
 
 export default GaugeChart

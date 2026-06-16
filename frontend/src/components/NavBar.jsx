@@ -6,11 +6,9 @@ import Toolbar from '@mui/material/Toolbar'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
-import Drawer from '@mui/material/Drawer'
-import List from '@mui/material/List'
-import ListItemButton from '@mui/material/ListItemButton'
-import ListItemText from '@mui/material/ListItemText'
+import Collapse from '@mui/material/Collapse'
 import MenuIcon from '@mui/icons-material/Menu'
+import CloseIcon from '@mui/icons-material/Close'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 
@@ -74,7 +72,11 @@ function NavBar() {
                     borderColor: active ? 'primary.main' : 'transparent',
                     textTransform: 'none',
                     fontSize: 14,
-                    '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                    '&:hover': {
+                      color: 'primary.main',
+                      bgcolor: 'action.hover',
+                      borderColor: 'primary.main',
+                    },
                   }}
                 >
                   {l.label}
@@ -95,33 +97,59 @@ function NavBar() {
           </IconButton>
 
           <IconButton
-            onClick={() => setMenuOpen(true)}
+            onClick={() => setMenuOpen((o) => !o)}
             sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: 'text.primary' }}
-            aria-label="Open navigation menu"
+            aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={menuOpen}
           >
-            <MenuIcon />
+            {menuOpen ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
         </Box>
       </Toolbar>
 
-      {/* Mobile drawer */}
-      <Drawer anchor="right" open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <Box sx={{ width: 240 }} role="presentation">
-          <List>
-            {LINKS.map((l) => (
-              <ListItemButton
+      {/* Mobile dropdown menu, expands from below the navbar */}
+      <Collapse in={menuOpen} timeout="auto" unmountOnExit>
+        <Box
+          sx={{
+            display: { xs: 'flex', sm: 'none' },
+            flexDirection: 'column',
+            bgcolor: 'background.paper',
+            borderTop: 1,
+            borderColor: 'divider',
+            py: 1,
+          }}
+        >
+          {LINKS.map((l) => {
+            const active = pathname === l.to
+            return (
+              <Box
                 key={l.to}
                 component={RouterLink}
                 to={l.to}
-                selected={pathname === l.to}
                 onClick={() => setMenuOpen(false)}
+                sx={{
+                  display: 'block',
+                  px: 3,
+                  py: 1.75,
+                  fontSize: 15,
+                  textDecoration: 'none',
+                  color: active ? 'primary.main' : 'text.secondary',
+                  borderLeft: '3px solid',
+                  borderColor: active ? 'primary.main' : 'transparent',
+                  bgcolor: active ? 'action.hover' : 'transparent',
+                  '&:hover': {
+                    color: 'primary.main',
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0,212,255,0.08)' : 'rgba(0,102,204,0.08)',
+                    borderColor: 'primary.main',
+                  },
+                }}
               >
-                <ListItemText primary={l.label} />
-              </ListItemButton>
-            ))}
-          </List>
+                {l.label}
+              </Box>
+            )
+          })}
         </Box>
-      </Drawer>
+      </Collapse>
     </AppBar>
   )
 }

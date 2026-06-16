@@ -158,10 +158,10 @@ function ResultsTable({
 
       <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}>
         <Table size="small">
-          <TableHead>
+          <TableHead sx={{ bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#252a3e' : '#cfe0f5') }}>
             <TableRow>
               {selectable && (
-                <TableCell padding="checkbox">
+                <TableCell padding="checkbox" sx={{ bgcolor: 'inherit' }}>
                   <Checkbox
                     size="small"
                     checked={allSelected}
@@ -174,7 +174,16 @@ function ResultsTable({
               {cols.map((c) => (
                 <TableCell
                   key={c}
-                  sx={{ textTransform: 'uppercase', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}
+                  sx={{
+                    bgcolor: 'inherit',
+                    px: 1,
+                    color: (theme) => (theme.palette.mode === 'dark' ? '#9ca3af' : '#3e5575'),
+                    textTransform: 'uppercase',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    whiteSpace: 'nowrap',
+                  }}
                   sortDirection={sort.key === c ? sort.dir : false}
                 >
                   {sortable ? (
@@ -197,7 +206,23 @@ function ResultsTable({
               const rowKey = row[keyField]
               const isChecked = selectable && selectedKeys?.has(rowKey)
               return (
-                <TableRow key={i} hover selected={!!isChecked}>
+                <TableRow
+                  key={i}
+                  hover
+                  selected={!!isChecked}
+                  sx={{
+                    '&:nth-of-type(odd)': {
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.025)'
+                          : 'rgba(0,0,0,0.018)',
+                    },
+                    '& td': {
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                    },
+                  }}
+                >
                   {selectable && (
                     <TableCell padding="checkbox">
                       <Checkbox
@@ -209,7 +234,9 @@ function ResultsTable({
                     </TableCell>
                   )}
                   {cols.map((c) => (
-                    <TableCell key={c}>{formatCell(row[c])}</TableCell>
+                    <TableCell key={c} sx={{ px: 1, whiteSpace: 'nowrap' }}>
+                      {formatCell(row[c])}
+                    </TableCell>
                   ))}
                 </TableRow>
               )

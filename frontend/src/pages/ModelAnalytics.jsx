@@ -120,7 +120,7 @@ function ModelAnalytics() {
       <ProgressIndicator visible={loading} label="Loading analytics..." />
 
       {data && (
-        <>
+        <Box key={active}>
           {metrics && (
             <Box
               sx={{
@@ -170,7 +170,7 @@ function ModelAnalytics() {
               <RadarChart
                 metrics={metrics.metrics}
                 series={[{ name: tab.label, values: metrics.values, color: tab.color }]}
-                title={`${tab.label} metric profile`}
+                title={`${tab.label} metric`}
                 rangeMin={0.7}
               />
             </Card>
@@ -191,7 +191,7 @@ function ModelAnalytics() {
               </Typography>
             )}
           </Card>
-        </>
+        </Box>
       )}
     </Container>
   )

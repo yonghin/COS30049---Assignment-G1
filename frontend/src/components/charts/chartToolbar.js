@@ -63,6 +63,7 @@ export function addToolbar(container, {
 } = {}) {
   const toolbar = d3.select(container)
     .append('div')
+    .attr('class', 'chart-toolbar')
     .style('position', 'absolute')
     .style('top', '6px')
     .style('right', '8px')

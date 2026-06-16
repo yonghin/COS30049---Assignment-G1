@@ -30,10 +30,10 @@
 
 NTCyber AI is a two-part project:
 
-- **Assignment 2 — Machine Learning.** Preprocessing + training scripts produce six trained
+- **Assignment 2: Machine Learning.** Preprocessing + training scripts produce six trained
   scikit-learn models (classification, clustering, regression) saved as `.pkl` files under
   `outputs/models/`.
-- **Assignment 3 — Web Platform.** A `backend/` (FastAPI) loads those models at startup and
+- **Assignment 3: Web Platform.** A `backend/` (FastAPI) loads those models at startup and
   exposes a REST API; a `frontend/` (React + Vite, D3 charts) consumes it. Users can:
   - **Spam Detector** — classify a single message or batch-upload a `.txt`/`.csv`, with a live
     probability gauge (Random Forest / Naive Bayes / Logistic Regression).
@@ -89,11 +89,11 @@ COS30049---Assignment-G1/
 │   ├── package.json
 │   └── src/
 │       ├── api/                 ← Axios client + spam/malware/analytics/history APIs
-│       ├── components/          ← NavBar, ErrorBanner, FileUploadWidget, ExportButton,
-│       │   │                       ProgressIndicator, ResultsTable
-│       │   └── charts/          ← BarChart, LineChart, GaugeChart, ScatterPlot, Heatmap
+│       ├── components/          ← NavBar, Layout, Footer, PageHeader, ErrorBanner, FileUploadWidget, ExportButton,
+│       │   │                       ProgressIndicator, ResultsTable, ToastContainer, KeywordHighlight
+│       │   └── charts/          ← BarChart, LineChart, GaugeChart, DonutChart, Histogram, RadarChart, Heatmap, ScatterPlot
 │       ├── pages/               ← Dashboard, SpamDetector, MalwareDetector, ModelAnalytics
-│       ├── index.css            ← Dark cybersecurity design system
+│       ├── index.css            ← Global theme variables (D3 chart colours) + keyframe animations
 │       └── test/                ← Vitest setup + smoke test
 │
 ├── data/
@@ -120,13 +120,13 @@ COS30049---Assignment-G1/
 
 ## Tech Stack
 
-| Layer          | Technology (as built / verified)                                        |
-| -------------- | ----------------------------------------------------------------------- |
-| ML runtime     | Python 3.13 · scikit-learn 1.8 · pandas 3.0 · numpy 2.4                 |
-| Backend        | FastAPI 0.136 · uvicorn · pydantic v2 · python-multipart                |
-| Backend tests  | pytest · FastAPI `TestClient` (httpx)                                   |
-| Frontend       | React 19 · Vite 8 · React Router 7 · Axios · **D3.js v7** · CSS Modules |
-| Frontend tests | Vitest 4 · @testing-library/react · MSW (Mock Service Worker)           |
+| Layer          | Technology (as built / verified)                                                     |
+| -------------- | ------------------------------------------------------------------------------------ |
+| ML runtime     | Python 3.13 · scikit-learn 1.8 · pandas 3.0 · numpy 2.4                              |
+| Backend        | FastAPI 0.136 · uvicorn · pydantic v2 · python-multipart                             |
+| Backend tests  | pytest · FastAPI `TestClient` (httpx)                                                |
+| Frontend       | React 19 · Vite 8 · React Router 7 · Axios · **Material UI (MUI) v7** · **D3.js v7** |
+| Frontend tests | Vitest 4 · @testing-library/react · MSW (Mock Service Worker)                        |
 
 > **Note on versions.** The design prompt pinned older versions (sklearn 1.7.2, pandas 2.2,
 > React 18, etc.). The code runs against the newer versions actually installed on this machine.
@@ -218,8 +218,10 @@ npm run build        # production build            → frontend/dist/
 npm run preview      # serve the production build
 ```
 
-- **Design system** — a dark cybersecurity theme defined via CSS variables in
-  `src/index.css`, applied through per-component CSS Modules.
+- **UI framework** — the entire interface is built with **Material UI (MUI)**: pages and
+  components use MUI primitives (AppBar, Card, Table, Dialog, TextField, Snackbar, etc.)
+  styled through the `sx` prop and a shared light/dark theme created with `createTheme` in
+  `src/context/ThemeContext.jsx`. D3 chart colours are read from CSS variables in `src/index.css`.
 - **Charts** — all eight chart components (`BarChart`, `LineChart`, `GaugeChart`, `DonutChart`,
   `Histogram`, `RadarChart`, `Heatmap`, `ScatterPlot`) are built with **D3.js v7** using SVG
   rendering. Each chart supports hover tooltips, responsive resize, and light/dark theme switching.

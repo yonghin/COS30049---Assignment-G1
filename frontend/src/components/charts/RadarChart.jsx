@@ -214,7 +214,7 @@ function RadarChart({ series = [], metrics = [], title = 'Model Comparison', ran
     return () => window.removeEventListener('resize', draw)
   }, [series, metrics, title, rangeMin, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
 
 export default RadarChart

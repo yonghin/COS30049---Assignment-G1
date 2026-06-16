@@ -164,7 +164,7 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
     return () => window.removeEventListener('resize', draw)
   }, [matrix, labels, title, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '360px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '360px', position: 'relative' }} />
 }
 
 export default Heatmap

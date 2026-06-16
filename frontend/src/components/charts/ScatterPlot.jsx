@@ -206,7 +206,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
     return () => window.removeEventListener('resize', draw)
   }, [pcaData, labels, clusters, anomalies, rowIds, title, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '420px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '420px', position: 'relative' }} />
 }
 
 export default ScatterPlot

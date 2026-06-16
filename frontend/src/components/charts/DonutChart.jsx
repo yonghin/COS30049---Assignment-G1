@@ -152,7 +152,7 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
     return () => window.removeEventListener('resize', draw)
   }, [labels, values, colors, title, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
 
 export default DonutChart

@@ -148,9 +148,10 @@ function History() {
               gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' },
               gap: 2,
               mb: 2.5,
+              alignItems: 'stretch',
             }}
           >
-            <Paper elevation={0} sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5 }}>
+            <Paper elevation={0} sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5, minWidth: 0 }}>
               <DonutChart
                 labels={['Spam', 'Malware']}
                 values={[spamCount, malwareCount]}
@@ -158,7 +159,7 @@ function History() {
                 title="Activity by type"
               />
             </Paper>
-            <Paper elevation={0} sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5 }}>
+            <Paper elevation={0} sx={{ bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5, minWidth: 0 }}>
               <ResultsTable
                 columns={['time', 'kind', 'model', 'label', 'confidence', 'summary']}
                 rows={rows}

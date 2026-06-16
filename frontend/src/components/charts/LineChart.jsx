@@ -70,7 +70,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
       svg.append('text').attr('x', W / 2).attr('y', 22).attr('text-anchor', 'middle')
         .style('font-size', '14px').style('fill', text)
         .text(isRoc
-          ? (title ?? `ROC Curve (AUC = ${auc != null ? auc.toFixed(4) : 'N/A'})`)
+          ? (title ?? `ROC (AUC = ${auc != null ? auc.toFixed(4) : 'N/A'})`)
           : (title ?? 'Live Predictions'))
 
       if (isRoc) {
@@ -181,7 +181,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
         addToolbar(container, {
           svgSel: svg, zoomBehavior: rocZoom,
           onReset: () => { zoomTransform.current = d3.zoomIdentity },
-          title: title ?? `ROC Curve (AUC = ${auc != null ? auc.toFixed(4) : 'N/A'})`,
+          title: title ?? `ROC (AUC = ${auc != null ? auc.toFixed(4) : 'N/A'})`,
         })
 
       } else {
@@ -371,7 +371,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
     return () => window.removeEventListener('resize', draw)
   }, [spamSeries, malwareSeries, fpr, tpr, auc, title, color, theme])
 
-  return <div ref={containerRef} style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
+  return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
 
 export default LineChart

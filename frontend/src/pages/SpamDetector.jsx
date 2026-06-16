@@ -352,8 +352,34 @@ function SpamDetector() {
           />
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap', my: 2.5 }}>
             <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Load sample:</Typography>
-            <Chip label="Ham set" size="small" variant="outlined" onClick={() => loadBatchSample('ham')} />
-            <Chip label="Spam set" size="small" variant="outlined" color="error" onClick={() => loadBatchSample('spam')} />
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => loadBatchSample('ham')}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 5,
+                color: 'text.primary',
+                borderColor: 'divider',
+                '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
+              }}
+            >
+              Ham set
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => loadBatchSample('spam')}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 5,
+                color: 'text.primary',
+                borderColor: 'divider',
+                '&:hover': { borderColor: 'error.main', color: 'error.main' },
+              }}
+            >
+              Spam set
+            </Button>
             {fileLabel && <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>{fileLabel}</Typography>}
           </Box>
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', my: 2, flexWrap: 'wrap' }}>
