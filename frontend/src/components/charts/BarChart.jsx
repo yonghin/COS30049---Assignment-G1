@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { COLORS, getThemeColors } from './chartTheme'
+import { COLORS, getThemeColors, createTooltip, tipTitle, tipRow } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
@@ -52,14 +52,7 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
-      const tip = d3.select(container)
-        .append('div')
-        .style('position', 'absolute').style('visibility', 'hidden')
-        .style('background', bg).style('color', text)
-        .style('padding', '7px 11px').style('border-radius', '6px')
-        .style('font-size', '13px').style('pointer-events', 'none')
-        .style('border', `1px solid ${muted}`).style('z-index', '20')
-        .style('white-space', 'nowrap')
+      const tip = createTooltip(d3, container)
 
       const axisStyle = ax => {
         ax.select('.domain').attr('stroke', border)
@@ -107,7 +100,11 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
           .style('cursor', 'pointer')
           .on('mouseover', function (event, d) {
             d3.select(this).attr('opacity', 0.8)
-            tip.style('visibility', 'visible').text(`${d.toFixed(4)}`)
+            const i = vals.indexOf(d)
+            const feat = cats[i] ?? 'Value'
+            tip.style('visibility', 'visible').html(
+              tipRow(feat, d.toFixed(4), H_PALETTE[i % H_PALETTE.length])
+            )
           })
           .on('mousemove', function (event) {
             const r = container.getBoundingClientRect()
@@ -198,10 +195,16 @@ function BarChart({ models, accuracy, f1, auc, title = 'Model Performance', hori
             .attr('rx', 2)
             .attr('visibility', hidden.has(si) ? 'hidden' : 'visible')
             .style('cursor', 'pointer')
-            .on('mouseover', function (event, d) {
+            .on('mouseover', function (event, d, ) {
               if (hidden.has(si)) return
               d3.select(this).attr('opacity', 0.75)
-              tip.style('visibility', 'visible').html(`${key}: <strong>${d.toFixed(4)}</strong>`)
+              // si maps to Accuracy/F1/AUC; mdls[i] is the model name on this bar group.
+              const i = vals.indexOf(d)
+              const model = mdls[i] ?? ''
+              tip.style('visibility', 'visible').html(
+                tipTitle(model) +
+                tipRow(key, `${(d * 100).toFixed(2)}%`, metricColors[si])
+              )
             })
             .on('mousemove', function (event) {
               const r = container.getBoundingClientRect()

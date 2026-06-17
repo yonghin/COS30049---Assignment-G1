@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { getThemeColors } from './chartTheme'
+import { getThemeColors, createTooltip, tipTitle, tipRow } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
@@ -58,14 +58,7 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         .range([bg, '#4a3aaa', '#0077b6', '#00cc88'])
 
       // Tooltip
-      const tip = d3.select(container)
-        .append('div')
-        .style('position', 'absolute').style('visibility', 'hidden')
-        .style('background', bg).style('color', text)
-        .style('padding', '7px 11px').style('border-radius', '6px')
-        .style('font-size', '13px').style('pointer-events', 'none')
-        .style('border', `1px solid ${muted}`).style('z-index', '20')
-        .style('white-space', 'nowrap')
+      const tip = createTooltip(d3, container)
 
       const cells = []
       matrix.forEach((row, ri) => {
@@ -97,7 +90,10 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         .on('mouseover', function (event, d) {
           d3.select(this).attr('opacity', 0.75)
           tip.style('visibility', 'visible')
-            .html(`Actual <strong>${d.actual}</strong> / Predicted <strong>${d.predicted}</strong><br>Count: <strong>${d.value}</strong>`)
+            .html(
+              tipTitle(`Actual ${d.actual} → Pred ${d.predicted}`) +
+              tipRow('Count', d.value, d.value === d3.max(cells, c => c.value) ? '#00cc88' : '#0077b6')
+            )
         })
         .on('mousemove', function (event) {
           const r = container.getBoundingClientRect()

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { COLORS, getThemeColors } from './chartTheme'
+import { COLORS, getThemeColors, createTooltip, tipTitle, tipRow } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
@@ -59,14 +59,7 @@ function Histogram({
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
-      const tip = d3.select(container)
-        .append('div')
-        .style('position', 'absolute').style('visibility', 'hidden')
-        .style('background', bg).style('color', text)
-        .style('padding', '7px 11px').style('border-radius', '6px')
-        .style('font-size', '13px').style('pointer-events', 'none')
-        .style('border', `1px solid ${muted}`).style('z-index', '20')
-        .style('white-space', 'nowrap')
+      const tip = createTooltip(d3, container)
 
       const axisStyle = ax => {
         ax.select('.domain').attr('stroke', border)
@@ -109,7 +102,10 @@ function Histogram({
         .on('mouseover', function (event, d) {
           d3.select(this).attr('opacity', 1)
           tip.style('visibility', 'visible')
-            .html(`Range: ${d.x0.toFixed(2)} – ${d.x1.toFixed(2)}<br>Count: <strong>${d.length}</strong>`)
+            .html(
+              tipTitle(`${d.x0.toFixed(2)} to ${d.x1.toFixed(2)}`) +
+              tipRow('Count', d.length, color)
+            )
         })
         .on('mousemove', function (event) {
           const r = container.getBoundingClientRect()

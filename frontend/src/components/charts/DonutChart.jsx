@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { COLORS, getThemeColors } from './chartTheme'
+import { COLORS, getThemeColors, createTooltip, tipTitle, tipRow } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
@@ -36,19 +36,7 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
       const cx = W / 2
       const cy = margin.top + radius
 
-      const tip = d3.select(container)
-        .append('div')
-        .style('position', 'absolute')
-        .style('visibility', 'hidden')
-        .style('background', bg)
-        .style('color', text)
-        .style('padding', '7px 11px')
-        .style('border-radius', '6px')
-        .style('font-size', '13px')
-        .style('pointer-events', 'none')
-        .style('border', `1px solid ${muted}`)
-        .style('z-index', '20')
-        .style('white-space', 'nowrap')
+      const tip = createTooltip(d3, container)
 
       if (!labels.length || !values.length) {
         svg.append('text')
@@ -83,7 +71,10 @@ function DonutChart({ labels = [], values = [], colors, title = 'Class Distribut
           d3.select(this).transition().duration(120).attr('d', arcHover)
           const pct = visibleTotal > 0 ? ((d.data / visibleTotal) * 100).toFixed(1) : '0.0'
           tip.style('visibility', 'visible')
-            .html(`<strong>${labels[d.index]}</strong>: ${d.data} (${pct}%)`)
+            .html(
+              tipTitle(labels[d.index], sliceColors[d.index]) +
+              tipRow('Count', `${d.data} (${pct}%)`, sliceColors[d.index])
+            )
         })
         .on('mousemove', function (event) {
           const r = container.getBoundingClientRect()

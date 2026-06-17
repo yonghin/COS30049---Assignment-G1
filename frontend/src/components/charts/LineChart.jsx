@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { COLORS, getThemeColors } from './chartTheme'
+import { COLORS, getThemeColors, createTooltip, tipTitle, tipRow } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
@@ -48,14 +48,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
       }
 
       // Tooltip div
-      const tip = d3.select(container)
-        .append('div')
-        .style('position', 'absolute').style('visibility', 'hidden')
-        .style('background', bg).style('color', text)
-        .style('padding', '7px 11px').style('border-radius', '6px')
-        .style('font-size', '13px').style('pointer-events', 'none')
-        .style('border', `1px solid ${muted}`).style('z-index', '20')
-        .style('white-space', 'nowrap')
+      const tip = createTooltip(d3, container)
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
@@ -171,7 +164,10 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             const x0  = currentX.invert(mx)
             const idx = Math.max(0, Math.min(fpr.length - 1, d3.bisectLeft(fpr, x0)))
             tip.style('visibility', 'visible')
-              .html(`FPR: <strong>${fpr[idx].toFixed(4)}</strong><br>TPR: <strong>${tpr[idx].toFixed(4)}</strong>`)
+              .html(
+                tipRow('FPR', fpr[idx].toFixed(4), COLORS.muted) +
+                tipRow('TPR', tpr[idx].toFixed(4), color || COLORS.accent)
+              )
             const r = container.getBoundingClientRect()
             const tipW = tip.node().offsetWidth || 160
             const relX = event.clientX - r.left
@@ -266,7 +262,11 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             .on('mouseover', function (event, d) {
               d3.select(this).attr('r', 6)
               tip.style('visibility', 'visible')
-                .html(`${d3.timeFormat('%m-%d %H:%M')(d.date)} (MYT)<br>Count: <strong>${d.count}</strong>`)
+                .html(
+                  tipTitle(`${d3.timeFormat('%m-%d %H:%M')(d.date)} (MYT)`) +
+                  tipRow(cls === 'spam-dot' ? 'Spam' : 'Malware', d.count,
+                         cls === 'spam-dot' ? COLORS.accent : COLORS.danger)
+                )
             })
             .on('mousemove', function (event) {
               const r = container.getBoundingClientRect()

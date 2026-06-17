@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { COLORS, getThemeColors } from './chartTheme'
+import { COLORS, getThemeColors, createTooltip, tipTitle, tipRow } from './chartTheme'
 import { useTheme } from '../../context/ThemeContext'
 import { addToolbar } from './chartToolbar'
 
@@ -79,14 +79,7 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
       const yAxisG = g.append('g').call(d3.axisLeft(y).ticks(5)).call(axisStyle)
 
       // Tooltip
-      const tip = d3.select(container)
-        .append('div')
-        .style('position', 'absolute').style('visibility', 'hidden')
-        .style('background', bg).style('color', text)
-        .style('padding', '7px 11px').style('border-radius', '6px')
-        .style('font-size', '13px').style('pointer-events', 'none')
-        .style('border', `1px solid ${muted}`).style('z-index', '20')
-        .style('white-space', 'nowrap')
+      const tip = createTooltip(d3, container)
 
       // Clipped group — dots stay inside axes during zoom/pan
       const chartArea = g.append('g').attr('clip-path', `url(#${clipId})`)
@@ -95,7 +88,11 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         d3.select(this).attr('r', 7)
         const r = container.getBoundingClientRect()
         tip.style('visibility', 'visible')
-          .html(`Row ${d.rowId} | ${d.label} | Cluster ${d.cluster}`)
+          .html(
+            tipTitle(`Row ${d.rowId}`) +
+            tipRow(d.label, `Cluster ${d.cluster}`,
+                   d.label === 'MALWARE' ? COLORS.danger : COLORS.success)
+          )
         const tipW = tip.node().offsetWidth || 160
         const relX = event.clientX - r.left
         const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
@@ -138,7 +135,10 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         .on('mouseover', function (event, d) {
           const r = container.getBoundingClientRect()
           tip.style('visibility', 'visible')
-            .html(`Row ${d.rowId} | ANOMALY | Cluster ${d.cluster}`)
+            .html(
+              tipTitle(`Row ${d.rowId}`) +
+              tipRow('Anomaly', `Cluster ${d.cluster}`, COLORS.warning)
+            )
           tip.style('top',  `${event.clientY - r.top  - 10}px`)
              .style('left', `${event.clientX - r.left + 12}px`)
         })
