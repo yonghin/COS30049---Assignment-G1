@@ -422,8 +422,9 @@ function SpamDetector() {
                 <Paper elevation={0} sx={{ bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5 }}>
                   <Histogram
                     values={batch.results.map((r) => r.spam_prob)}
-                    title="Spam Probability Distribution"
+                    title="Spam Probability"
                     xLabel="Spam probability"
+                    domainMax={1}
                   />
                 </Paper>
               </Box>

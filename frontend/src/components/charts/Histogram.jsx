@@ -12,6 +12,7 @@ function Histogram({
   xLabel = 'Confidence',
   color  = COLORS.accent,
   nbins  = 20,
+  domainMax = null,   // when set (e.g. 1), the x-axis is fixed to [0, domainMax]
 }) {
   const containerRef  = useRef(null)
   const zoomTransform = useRef(d3.zoomIdentity)
@@ -55,7 +56,7 @@ function Histogram({
 
       // Clip x-axis labels (in xAxisG's local coordinate system: axis line is y=0)
       defs.append('clipPath').attr('id', `hist-xclip-${cid}`)
-        .append('rect').attr('x', 0).attr('y', -2).attr('width', iW).attr('height', m.bottom + 4)
+        .append('rect').attr('x', -20).attr('y', -2).attr('width', iW + 24).attr('height', m.bottom + 4)
 
       const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`)
 
@@ -68,7 +69,8 @@ function Histogram({
       }
 
       // Domain always starts at 0; negative values are never shown.
-      const xMax = d3.max(values) || 1
+      // When domainMax is given (e.g. 1 for probabilities), the x-axis is fixed to that range.
+      const xMax = domainMax != null ? domainMax : (d3.max(values) || 1)
       const xOrig = d3.scaleLinear().domain([0, xMax]).range([0, iW])
 
       // Build evenly spaced bin thresholds so every bar has the exact same width,
@@ -156,7 +158,7 @@ function Histogram({
     draw()
     window.addEventListener('resize', draw)
     return () => window.removeEventListener('resize', draw)
-  }, [values, title, xLabel, color, nbins, theme])
+  }, [values, title, xLabel, color, nbins, domainMax, theme])
 
   return <div ref={containerRef} className="chart-container" style={{ width: '100%', minHeight: '400px', position: 'relative' }} />
 }
