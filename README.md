@@ -92,7 +92,7 @@ COS30049---Assignment-G1/
 │       ├── components/          ← NavBar, Layout, Footer, PageHeader, ErrorBanner, FileUploadWidget, ExportButton,
 │       │   │                       ProgressIndicator, ResultsTable, ToastContainer, KeywordHighlight
 │       │   └── charts/          ← BarChart, LineChart, GaugeChart, DonutChart, Histogram, RadarChart, Heatmap, ScatterPlot
-│       ├── pages/               ← Dashboard, SpamDetector, MalwareDetector, ModelAnalytics
+│       ├── pages/               ← Dashboard, SpamDetector, MalwareDetector, ModelAnalytics, History
 │       ├── index.css            ← Global theme variables (D3 chart colours) + keyframe animations
 │       └── test/                ← Vitest setup + smoke test
 │
