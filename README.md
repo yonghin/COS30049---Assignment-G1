@@ -161,6 +161,8 @@ python -m uvicorn backend.main:app --reload
 ```powershell
 cd frontend
 npm install        # first time only
+npm install @mui/material @emotion/react @emotion/styled
+npm install @mui/icons-material
 npm run dev
 ```
 
