@@ -193,7 +193,7 @@ function SpamDetector() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 3, animation: 'fadeSlideUp 0.4s ease-out both' }}>
       <PageHeader
         title="Spam Detector"
         subtitle="Classify a single message or a batch file as spam or ham using three trained models."
@@ -416,10 +416,10 @@ function SpamDetector() {
                 ))}
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, my: 2.5 }}>
-                <Paper elevation={0} sx={{ bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 3, p: 2 }}>
+                <Paper elevation={0} sx={{ bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5 }}>
                   <DonutChart labels={['Ham', 'Spam']} values={[batch.ham_count, batch.spam_count]} title="Ham vs Spam" />
                 </Paper>
-                <Paper elevation={0} sx={{ bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 3, p: 2 }}>
+                <Paper elevation={0} sx={{ bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 3, p: 2.5 }}>
                   <Histogram
                     values={batch.results.map((r) => r.spam_prob)}
                     title="Spam Probability Distribution"

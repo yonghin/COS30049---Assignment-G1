@@ -90,10 +90,24 @@ function NavBar() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconButton
             onClick={toggleTheme}
-            sx={{ color: 'text.primary' }}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            sx={{
+              // Warm amber for the sun (light), cool blue for the moon (dark).
+              color: theme === 'dark' ? '#ffb347' : '#5b6cff',
+              transition: 'transform 0.5s ease, color 0.3s ease',
+              '&:hover': {
+                bgcolor: 'action.hover',
+                transform: 'rotate(20deg) scale(1.12)',
+              },
+              // Spin one full turn each time the icon (theme) changes.
+              '& .theme-icon': {
+                animation: 'spinOnce 0.5s ease',
+              },
+            }}
           >
-            {theme === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            {theme === 'dark'
+              ? <LightModeIcon className="theme-icon" />
+              : <DarkModeIcon className="theme-icon" />}
           </IconButton>
 
           <IconButton

@@ -31,7 +31,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
       const H  = isRoc ? 400 : 400
       const m  = isRoc
         ? { top: 44, right: 30, bottom: 60, left: 60 }
-        : { top: 44, right: 30, bottom: 68, left: 60 }
+        : { top: 44, right: 30, bottom: 80, left: 60 }
       const iW = W - m.left - m.right
       const iH = H - m.top  - m.bottom
 
@@ -173,8 +173,11 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             tip.style('visibility', 'visible')
               .html(`FPR: <strong>${fpr[idx].toFixed(4)}</strong><br>TPR: <strong>${tpr[idx].toFixed(4)}</strong>`)
             const r = container.getBoundingClientRect()
-            tip.style('top',  `${event.clientY - r.top  - 10}px`)
-               .style('left', `${event.clientX - r.left + 12}px`)
+            const tipW = tip.node().offsetWidth || 160
+            const relX = event.clientX - r.left
+            const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+            tip.style('top',  `${event.clientY - r.top - 10}px`)
+               .style('left', `${Math.max(4, left)}px`)
           })
           .on('mouseleave', () => tip.style('visibility', 'hidden'))
 
@@ -209,8 +212,13 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
         const xExtent  = d3.extent(allData, d => d.date)
         const yMax     = d3.max(allData, d => d.count) || 1
 
-        const x = d3.scaleTime().domain(xExtent).range([0, iW])
-        const y = d3.scaleLinear().domain([0, yMax]).range([iH, 0]).nice()
+        // Pad the time axis by 8% on each side so edge points are not stuck to the borders.
+        const xSpan    = (xExtent[1] - xExtent[0]) || 60000
+        const xPadded  = [new Date(xExtent[0].getTime() - xSpan * 0.08),
+                          new Date(xExtent[1].getTime() + xSpan * 0.08)]
+        const x = d3.scaleTime().domain(xPadded).range([0, iW])
+        // Add headroom above the highest point so dots near the top are not clipped.
+        const y = d3.scaleLinear().domain([0, yMax * 1.25]).range([iH, 0]).nice()
 
         // Pre-compute timestamp arrays for bisector (avoids re-mapping on every mousemove)
         const spamTimes    = spamData.map(d => d.date.getTime())
@@ -262,8 +270,12 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             })
             .on('mousemove', function (event) {
               const r = container.getBoundingClientRect()
-              tip.style('top',  `${event.clientY - r.top  - 10}px`)
-                 .style('left', `${event.clientX - r.left + 12}px`)
+              const tipW = tip.node().offsetWidth || 160
+              const relX = event.clientX - r.left
+              // Flip the tooltip to the left of the cursor when near the right edge.
+              const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+              tip.style('top',  `${event.clientY - r.top - 10}px`)
+                 .style('left', `${Math.max(4, left)}px`)
             })
             .on('mouseout', function () {
               d3.select(this).attr('r', 4)
@@ -274,7 +286,7 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
         mkDots(malwareData, 'malware-dot', COLORS.danger, x, 'malware')
 
         // Axis labels — x label placed above the clickable legend
-        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 32)
+        svg.append('text').attr('x', m.left + iW / 2).attr('y', H - 40)
           .attr('text-anchor', 'middle').style('font-size', '12px').style('fill', muted)
           .text('Time (MYT)')
         svg.append('text')
@@ -328,36 +340,57 @@ function LineChart({ spamSeries, malwareSeries, fpr, tpr, auc, title, color }) {
             chartArea.selectAll('.malware-dot').attr('cx', d => newX(d.date))
           })
 
-        // Overlay rect: zoom + hover-tooltip events
+        // Overlay rect: handles zoom, and shows a tooltip only when the cursor is
+        // close to an actual data point (not anywhere on the chart).
         const overlay = svg.append('rect')
           .attr('transform', `translate(${m.left},${m.top})`)
           .attr('width', iW).attr('height', iH)
           .attr('fill', 'none').attr('pointer-events', 'all')
+          .style('cursor', 'crosshair')
           .call(zoomBehavior)
           .call(zoomBehavior.transform, zoomTransform.current)
           .on('mousemove.tip', function (event) {
-            const [mx]  = d3.pointer(event)
-            const xVal  = currentX.invert(mx)
-            const t     = xVal.getTime()
-            let html    = ''
+            const [mx, my] = d3.pointer(event)
+            const t = currentX.invert(mx).getTime()
+            let html = ''
+            let nearest = Infinity
 
+            // Find the closest spam point (by pixel distance) if spam is visible.
             if (spamData.length && !hidden.has('spam')) {
               const bi = Math.max(0, Math.min(spamData.length - 1, d3.bisectLeft(spamTimes, t)))
-              html += `${d3.timeFormat('%m-%d %H:%M')(spamData[bi].date)} (MYT)<br>Spam: <strong>${spamData[bi].count}</strong><br>`
+              const dx = currentX(spamData[bi].date) - mx
+              const dy = y(spamData[bi].count) - my
+              const dist = Math.sqrt(dx * dx + dy * dy)
+              if (dist < 30) {
+                nearest = dist
+                html = `${d3.timeFormat('%m-%d %H:%M')(spamData[bi].date)} (MYT)<br>Spam: <strong>${spamData[bi].count}</strong>`
+              }
             }
+            // Find the closest malware point; only override if it is closer.
             if (malwareData.length && !hidden.has('malware')) {
               const bi = Math.max(0, Math.min(malwareData.length - 1, d3.bisectLeft(malwareTimes, t)))
-              html += `Malware: <strong>${malwareData[bi].count}</strong>`
+              const dx = currentX(malwareData[bi].date) - mx
+              const dy = y(malwareData[bi].count) - my
+              const dist = Math.sqrt(dx * dx + dy * dy)
+              if (dist < 30 && dist < nearest) {
+                html = `${d3.timeFormat('%m-%d %H:%M')(malwareData[bi].date)} (MYT)<br>Malware: <strong>${malwareData[bi].count}</strong>`
+              }
             }
+
             if (html) {
               tip.style('visibility', 'visible').html(html)
               const r = container.getBoundingClientRect()
-              tip.style('top',  `${event.clientY - r.top  - 10}px`)
-                 .style('left', `${event.clientX - r.left + 12}px`)
+              const tipW = tip.node().offsetWidth || 160
+              const relX = event.clientX - r.left
+              const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+              tip.style('top',  `${event.clientY - r.top - 10}px`)
+                 .style('left', `${Math.max(4, left)}px`)
+            } else {
+              tip.style('visibility', 'hidden')
             }
           })
           .on('mouseleave.tip', () => tip.style('visibility', 'hidden'))
-
+          
         addToolbar(container, {
           svgSel: overlay, zoomBehavior,
           onReset: () => { zoomTransform.current = d3.zoomIdentity },

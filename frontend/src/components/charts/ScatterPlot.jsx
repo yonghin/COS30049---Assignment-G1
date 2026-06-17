@@ -96,8 +96,11 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         const r = container.getBoundingClientRect()
         tip.style('visibility', 'visible')
           .html(`Row ${d.rowId} | ${d.label} | Cluster ${d.cluster}`)
-        tip.style('top',  `${event.clientY - r.top  - 10}px`)
-           .style('left', `${event.clientX - r.left + 12}px`)
+        const tipW = tip.node().offsetWidth || 160
+        const relX = event.clientX - r.left
+        const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+        tip.style('top',  `${event.clientY - r.top - 10}px`)
+           .style('left', `${Math.max(4, left)}px`)
       }
       const hideTip = function (_, d) {
         d3.select(this).attr('r', 5)
@@ -113,8 +116,11 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
           .on('mouseover', mkTip)
           .on('mousemove', function (event) {
             const r2 = container.getBoundingClientRect()
-            tip.style('top',  `${event.clientY - r2.top  - 10}px`)
-               .style('left', `${event.clientX - r2.left + 12}px`)
+            const tipW = tip.node().offsetWidth || 160
+            const relX = event.clientX - r2.left
+            const left = relX + 12 + tipW > r2.width ? relX - tipW - 12 : relX + 12
+            tip.style('top',  `${event.clientY - r2.top - 10}px`)
+               .style('left', `${Math.max(4, left)}px`)
           })
           .on('mouseout', hideTip)
 
@@ -138,8 +144,11 @@ function ScatterPlot({ pcaData = [], labels = [], clusters = [], anomalies = [],
         })
         .on('mousemove', function (event) {
           const r = container.getBoundingClientRect()
-          tip.style('top',  `${event.clientY - r.top  - 10}px`)
-             .style('left', `${event.clientX - r.left + 12}px`)
+          const tipW = tip.node().offsetWidth || 160
+          const relX = event.clientX - r.left
+          const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+          tip.style('top',  `${event.clientY - r.top - 10}px`)
+             .style('left', `${Math.max(4, left)}px`)
         })
         .on('mouseout', () => tip.style('visibility', 'hidden'))
 

@@ -101,8 +101,11 @@ function Heatmap({ matrix = [], labels = [], title = 'Confusion Matrix' }) {
         })
         .on('mousemove', function (event) {
           const r = container.getBoundingClientRect()
-          tip.style('top',  `${event.clientY - r.top  - 10}px`)
-             .style('left', `${event.clientX - r.left + 12}px`)
+          const tipW = tip.node().offsetWidth || 160
+          const relX = event.clientX - r.left
+          const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+          tip.style('top',  `${event.clientY - r.top - 10}px`)
+             .style('left', `${Math.max(4, left)}px`)
         })
         .on('mouseout', function () { d3.select(this).attr('opacity', 1); tip.style('visibility', 'hidden') })
 

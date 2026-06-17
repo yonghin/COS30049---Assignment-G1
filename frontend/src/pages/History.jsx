@@ -68,7 +68,7 @@ function History() {
   ]
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3, animation: 'fadeIn 0.35s ease-out both' }}>
+    <Container maxWidth="xl" sx={{ py: 3, animation: 'fadeSlideUp 0.4s ease-out both' }}>
       <PageHeader
         title="Prediction History"
         subtitle="Every prediction you make is saved locally in your browser (localStorage). It survives reloads and never leaves this device."

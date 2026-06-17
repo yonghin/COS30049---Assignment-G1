@@ -37,7 +37,7 @@ function Histogram({
         .append('svg')
         .attr('width', '100%').attr('height', H)
         .attr('viewBox', `0 0 ${W} ${H}`)
-        .style('background', bg)
+        .style('background', 'transparent')
 
       if (!values.length) {
         svg.append('text')
@@ -74,9 +74,14 @@ function Histogram({
         ax.selectAll('.tick text').style('fill', muted)
       }
 
-      // Domain always starts at 0 — negative values never shown
-      const xOrig = d3.scaleLinear().domain([0, d3.max(values) || 1]).range([0, iW])
-      const bins  = d3.bin().domain(xOrig.domain()).thresholds(nbins)(values)
+      // Domain always starts at 0; negative values are never shown.
+      const xMax = d3.max(values) || 1
+      const xOrig = d3.scaleLinear().domain([0, xMax]).range([0, iW])
+
+      // Build evenly spaced bin thresholds so every bar has the exact same width,
+      // instead of letting d3.bin() pick "nice" but unequal boundaries.
+      const thresholds = d3.range(nbins + 1).map((i) => (xMax * i) / nbins)
+      const bins  = d3.bin().domain([0, xMax]).thresholds(thresholds)(values)
       const yOrig = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).range([iH, 0]).nice()
 
       // Fixed Y grid + left axis
@@ -108,8 +113,11 @@ function Histogram({
         })
         .on('mousemove', function (event) {
           const r = container.getBoundingClientRect()
-          tip.style('top',  `${event.clientY - r.top  - 10}px`)
-             .style('left', `${event.clientX - r.left + 12}px`)
+          const tipW = tip.node().offsetWidth || 160
+          const relX = event.clientX - r.left
+          const left = relX + 12 + tipW > r.width ? relX - tipW - 12 : relX + 12
+          tip.style('top',  `${event.clientY - r.top - 10}px`)
+             .style('left', `${Math.max(4, left)}px`)
         })
         .on('mouseout', function () { d3.select(this).attr('opacity', 0.85); tip.style('visibility', 'hidden') })
 

@@ -114,6 +114,12 @@ function Dashboard() {
 
   useEffect(() => subscribe(setLocalHistory), [])
 
+  // KPI counts come from the local prediction history (localStorage), the same source
+  // as the History page, so they persist across backend restarts.
+  const spamCount = localHistory.filter((i) => i.kind === 'spam').length
+  const malwareCount = localHistory.filter((i) => i.kind === 'malware').length
+
+  // spamSeries / malwareSeries (from the backend) still drive the Donut and Live charts.
   const sumSpam = spamSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
   const sumMalware = malwareSeries.reduce((acc, p) => acc + (p.count ?? 0), 0)
 
@@ -239,9 +245,9 @@ function Dashboard() {
             mb: 3,
           }}
         >
-          <KpiCounter index={0} label="Total predictions" value={sumSpam + sumMalware} accent="secondary.main" />
-          <KpiCounter index={1} label="Spam predictions" value={sumSpam} accent="primary.main" />
-          <KpiCounter index={2} label="Malware predictions" value={sumMalware} accent="error.main" />
+          <KpiCounter index={0} label="Total predictions" value={spamCount + malwareCount} accent="secondary.main" />
+          <KpiCounter index={1} label="Spam predictions" value={spamCount} accent="primary.main" />
+          <KpiCounter index={2} label="Malware predictions" value={malwareCount} accent="error.main" />
           <KpiCounter index={3} label="Models loaded" value={models.length} accent="success.main" />
         </Box>
 
