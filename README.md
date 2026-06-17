@@ -125,7 +125,7 @@ COS30049---Assignment-G1/
 | ML runtime     | Python 3.13 · scikit-learn 1.8 · pandas 3.0 · numpy 2.4                              |
 | Backend        | FastAPI 0.136 · uvicorn · pydantic v2 · python-multipart                             |
 | Backend tests  | pytest · FastAPI `TestClient` (httpx)                                                |
-| Frontend       | React 19 · Vite 8 · React Router 7 · Axios · **Material UI (MUI) v7** · **D3.js v7** |
+| Frontend       | React 19 · Vite 8 · React Router 7 · Axios · **Material UI (MUI) v9** · **D3.js v7** |
 | Frontend tests | Vitest 4 · @testing-library/react · MSW (Mock Service Worker)                        |
 
 > **Note on versions.** The design prompt pinned older versions (sklearn 1.7.2, pandas 2.2,
@@ -160,9 +160,7 @@ python -m uvicorn backend.main:app --reload
 
 ```powershell
 cd frontend
-npm install        # first time only
-npm install @mui/material @emotion/react @emotion/styled        # first time only
-npm install @mui/icons-material        # first time only
+npm install        # first time installs all dependencies from package.json only
 npm run dev
 ```
 
