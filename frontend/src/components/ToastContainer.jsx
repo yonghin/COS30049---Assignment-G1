@@ -1,7 +1,6 @@
 import Snackbar from '@mui/material/Snackbar'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import Stack from '@mui/material/Stack'
 import Slide from '@mui/material/Slide'
 
 // Toasts are stacked at the top-right. Each maps its type to an Alert severity.
@@ -25,14 +24,14 @@ function ToastContainer({ toasts = [], onDismiss, onDismissNow }) {
         left: 'auto',
       }}
     >
-      <Stack spacing={1.25} sx={{ maxWidth: 380 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 380 }}>
         {toasts.map((t) => (
           <Slide key={t.id} direction="left" in={!t.leaving} mountOnEnter unmountOnExit>
             <Alert
               severity={SEVERITY[t.type] ?? 'info'}
               variant="outlined"
               onClose={() => onDismiss(t.id)}
-              sx={{ bgcolor: 'background.paper', boxShadow: 3, alignItems: 'center' }}
+              sx={{ bgcolor: 'background.paper', boxShadow: 3, alignItems: 'center', width: '100%' }}
               action={
                 t.onUndo ? (
                   <Button
@@ -55,7 +54,7 @@ function ToastContainer({ toasts = [], onDismiss, onDismissNow }) {
             </Alert>
           </Slide>
         ))}
-      </Stack>
+      </div>
     </Snackbar>
   )
 }
